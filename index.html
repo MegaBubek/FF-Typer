@@ -4,31 +4,94 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>FF-Typer</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', sans-serif;
+      background-color: #0A1E3F; /* granat */
+      color: #D0E6FF; /* jasny niebieski */
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 100vh;
+    }
+
+    header {
+      background-color: #081530;
+      width: 100%;
+      padding: 20px 0;
+      text-align: center;
+      box-shadow: 0 0 10px #00000050;
+    }
+
+    header h1 {
+      margin: 0;
+      font-size: 2.5em;
+      color: #4FB0FF;
+    }
+
+    main {
+      padding: 20px;
+      max-width: 600px;
+      width: 100%;
+    }
+
+    .match-box {
+      background-color: #12264d;
+      border-radius: 10px;
+      padding: 15px;
+      margin-bottom: 15px;
+      box-shadow: 0 2px 5px #00000040;
+    }
+
+    .match-box h2 {
+      margin-top: 0;
+      color: #ffffff;
+    }
+
+    input[type="text"] {
+      width: 100%;
+      padding: 10px;
+      border-radius: 8px;
+      border: none;
+      font-size: 1em;
+      margin-top: 10px;
+      background-color: #1e3a70;
+      color: white;
+    }
+
+    footer {
+      margin-top: auto;
+      padding: 15px;
+      background-color: #081530;
+      color: #ffffff70;
+      font-size: 0.9em;
+      width: 100%;
+      text-align: center;
+    }
+  </style>
 </head>
 <body>
-  <h1>Witaj w FF-Typer!</h1>
-  <p>To wersja testowa typowania Ekstraklasy.</p>
+  <header>
+    <h1>FF-Typer</h1>
+  </header>
 
-  <form>
-    <label for="username">Twój nick:</label><br>
-    <input type="text" id="username" name="username" placeholder="Mega_Bubek"><br><br>
+  <main>
+    <div class="match-box">
+      <h2>Legia vs Lech</h2>
+      <input type="text" placeholder="Np. 2-1" />
+    </div>
 
-    <label>Lech vs Legia:</label><br>
-    <input type="text" placeholder="np. 2:1"><br><br>
+    <div class="match-box">
+      <h2>Ruch vs Górnik</h2>
+      <input type="text" placeholder="Np. 1-1" />
+    </div>
 
-    <label>Ruch vs Widzew:</label><br>
-    <input type="text" placeholder="np. 1:1"><br><br>
+    <!-- Możesz tu dodać więcej meczów -->
+  </main>
 
-    <label>Pogoń vs Jagiellonia:</label><br>
-    <input type="text" placeholder="np. 3:0"><br><br>
-
-    <label>Cracovia vs Piast:</label><br>
-    <input type="text" placeholder="np. 0:0"><br><br>
-
-    <label>Górnik vs Śląsk:</label><br>
-    <input type="text" placeholder="np. 2:2"><br><br>
-
-    <button type="submit">Zapisz typy</button>
-  </form>
+  <footer>
+    © 2025 Football Fans – Mega_Bubek
+  </footer>
 </body>
 </html>
