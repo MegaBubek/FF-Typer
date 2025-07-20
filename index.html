@@ -5,132 +5,108 @@
   <title>FF-Typer</title>
   <style>
     body {
-      font-family: Arial, sans-serif;
-      background-color: #0f172a;
-      color: white;
       margin: 0;
-      padding: 20px;
+      font-family: Arial, sans-serif;
+      background-color: #0d1b2a;
+      color: #ffffff;
     }
-    h1 {
-      text-align: center;
-      color: #22c55e;
-    }
-    .match {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      background-color: #1e293b;
+    header {
+      background-color: #1b263b;
       padding: 10px;
-      margin-bottom: 10px;
+      text-align: center;
+      font-size: 24px;
+      font-weight: bold;
+    }
+    .auth-container, .typer-container {
+      max-width: 500px;
+      margin: 30px auto;
+      background-color: #415a77;
+      padding: 20px;
       border-radius: 8px;
     }
-    .team {
-      flex: 1;
-      text-align: center;
-    }
-    .score-inputs {
-      display: flex;
-      gap: 5px;
-    }
-    .score-inputs input {
-      width: 40px;
-      padding: 5px;
-      font-size: 16px;
-      text-align: center;
+    .auth-container input, .typer-container input {
+      width: 100%;
+      padding: 10px;
+      margin: 8px 0;
+      border: none;
+      border-radius: 4px;
     }
     button {
-      padding: 6px 12px;
-      background-color: #3b82f6;
+      width: 100%;
+      padding: 10px;
+      margin-top: 10px;
+      background-color: #1b4332;
+      color: #ffffff;
       border: none;
-      color: white;
       border-radius: 4px;
       cursor: pointer;
     }
-    button:hover {
-      background-color: #2563eb;
+    .match {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+    .score-input {
+      width: 40px;
+      text-align: center;
     }
   </style>
 </head>
 <body>
-  <h1>FF-Typer - Ekstraklasa 2025/26</h1>  <div id="matches">
-    <div class="match">
-      <div class="team">Lech Poznań</div>
-      <div class="score-inputs">
-        <input type="number" min="0" max="99" inputmode="numeric" />
-        <input type="number" min="0" max="99" inputmode="numeric" />
-      </div>
-      <div class="team">Pogoń Szczecin</div>
-      <button>Zatwierdź</button>
-    </div><div class="match">
-  <div class="team">Legia Warszawa</div>
-  <div class="score-inputs">
-    <input type="number" min="0" max="99" inputmode="numeric" />
-    <input type="number" min="0" max="99" inputmode="numeric" />
-  </div>
-  <div class="team">Zagłębie Lubin</div>
-  <button>Zatwierdź</button>
-</div>
+  <header>FF-Typer</header>  <div class="auth-container" id="auth">
+    <h2>Rejestracja</h2>
+    <input type="text" id="username" placeholder="Nick" />
+    <input type="text" id="platform" placeholder="Platforma (YouTube/Instagram/TikTok)" />
+    <input type="email" id="email" placeholder="Email" />
+    <input type="password" id="password" placeholder="Hasło" />
+    <button onclick="register()">Zarejestruj się</button>
+  </div>  <div class="auth-container" id="login" style="display:none;">
+    <h2>Logowanie</h2>
+    <input type="text" id="loginEmail" placeholder="Email" />
+    <input type="password" id="loginPassword" placeholder="Hasło" />
+    <button onclick="login()">Zaloguj się</button>
+  </div>  <div class="typer-container" id="typer" style="display:none;">
+    <h2>Typuj wyniki 1. kolejki Ekstraklasy</h2>
+    <div class="match">Legia - Widzew <input class="score-input" type="number" /> : <input class="score-input" type="number" /></div>
+    <div class="match">Lech - Górnik <input class="score-input" type="number" /> : <input class="score-input" type="number" /></div>
+    <div class="match">Jagiellonia - Korona <input class="score-input" type="number" /> : <input class="score-input" type="number" /></div>
+    <div class="match">Zagłębie - Cracovia <input class="score-input" type="number" /> : <input class="score-input" type="number" /></div>
+    <div class="match">Raków - Radomiak <input class="score-input" type="number" /> : <input class="score-input" type="number" /></div>
+    <div class="match">Pogoń - Piast <input class="score-input" type="number" /> : <input class="score-input" type="number" /></div>
+    <div class="match">Wisła K. - Motor <input class="score-input" type="number" /> : <input class="score-input" type="number" /></div>
+    <div class="match">ŁKS - Stal M. <input class="score-input" type="number" /> : <input class="score-input" type="number" /></div>
+  </div>  <script>
+    function register() {
+      const user = {
+        username: document.getElementById('username').value,
+        platform: document.getElementById('platform').value,
+        email: document.getElementById('email').value,
+        password: document.getElementById('password').value
+      };
+      localStorage.setItem('ffUser', JSON.stringify(user));
+      document.getElementById('auth').style.display = 'none';
+      document.getElementById('typer').style.display = 'block';
+    }
 
-<div class="match">
-  <div class="team">Raków Częstochowa</div>
-  <div class="score-inputs">
-    <input type="number" min="0" max="99" inputmode="numeric" />
-    <input type="number" min="0" max="99" inputmode="numeric" />
-  </div>
-  <div class="team">Korona Kielce</div>
-  <button>Zatwierdź</button>
-</div>
+    function login() {
+      const storedUser = JSON.parse(localStorage.getItem('ffUser'));
+      const email = document.getElementById('loginEmail').value;
+      const password = document.getElementById('loginPassword').value;
+      if (storedUser && storedUser.email === email && storedUser.password === password) {
+        document.getElementById('login').style.display = 'none';
+        document.getElementById('typer').style.display = 'block';
+      } else {
+        alert('Nieprawidłowy email lub hasło');
+      }
+    }
 
-<div class="match">
-  <div class="team">Widzew Łódź</div>
-  <div class="score-inputs">
-    <input type="number" min="0" max="99" inputmode="numeric" />
-    <input type="number" min="0" max="99" inputmode="numeric" />
-  </div>
-  <div class="team">Stal Mielec</div>
-  <button>Zatwierdź</button>
-</div>
-
-<div class="match">
-  <div class="team">Cracovia</div>
-  <div class="score-inputs">
-    <input type="number" min="0" max="99" inputmode="numeric" />
-    <input type="number" min="0" max="99" inputmode="numeric" />
-  </div>
-  <div class="team">Górnik Zabrze</div>
-  <button>Zatwierdź</button>
-</div>
-
-<div class="match">
-  <div class="team">Piast Gliwice</div>
-  <div class="score-inputs">
-    <input type="number" min="0" max="99" inputmode="numeric" />
-    <input type="number" min="0" max="99" inputmode="numeric" />
-  </div>
-  <div class="team">Jagiellonia Białystok</div>
-  <button>Zatwierdź</button>
-</div>
-
-<div class="match">
-  <div class="team">ŁKS Łódź</div>
-  <div class="score-inputs">
-    <input type="number" min="0" max="99" inputmode="numeric" />
-    <input type="number" min="0" max="99" inputmode="numeric" />
-  </div>
-  <div class="team">Wisła Kraków</div>
-  <button>Zatwierdź</button>
-</div>
-
-<div class="match">
-  <div class="team">GKS Katowice</div>
-  <div class="score-inputs">
-    <input type="number" min="0" max="99" inputmode="numeric" />
-    <input type="number" min="0" max="99" inputmode="numeric" />
-  </div>
-  <div class="team">Motor Lublin</div>
-  <button>Zatwierdź</button>
-</div>
-
-  </div>
-</body>
+    window.onload = function () {
+      const storedUser = JSON.parse(localStorage.getItem('ffUser'));
+      if (storedUser) {
+        document.getElementById('auth').style.display = 'none';
+        document.getElementById('login').style.display = 'block';
+      }
+    };
+  </script></body>
 </html>
