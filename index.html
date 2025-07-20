@@ -5,125 +5,125 @@
   <title>FF-Typer</title>
   <style>
     body {
-      font-family: Arial, sans-serif;
-      background-color: #0a0f1c;
-      color: #ffffff;
-      margin: 0;
-      padding: 0;
-    }
-    header {
-      background-color: #111827;
+      background-color: #0f172a;
+      color: white;
+      font-family: sans-serif;
       padding: 20px;
       text-align: center;
-      font-size: 24px;
     }
-    .match {
-      border-bottom: 1px solid #374151;
-      padding: 15px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
+    .form {
+      background-color: #1e293b;
+      padding: 20px;
+      border-radius: 12px;
+      max-width: 400px;
+      margin: 20px auto;
     }
-    .teams {
-      font-size: 18px;
-      margin-bottom: 10px;
-    }
-    .inputs {
-      display: flex;
-      gap: 10px;
-      justify-content: center;
-      margin-bottom: 10px;
-    }
-    input[type="text"] {
-      width: 40px;
-      padding: 5px;
-      text-align: center;
-      font-size: 16px;
-    }
-    button {
-      padding: 5px 10px;
-      font-size: 16px;
-      background-color: #10b981;
-      border: none;
-      border-radius: 5px;
-      color: white;
-      cursor: pointer;
-    }
-    .week-selector {
-      display: flex;
-      justify-content: center;
-      align-items: center;
+    input, select, button {
       padding: 10px;
-      background-color: #1f2937;
+      margin: 10px 0;
+      width: 100%;
+      border: none;
+      border-radius: 8px;
     }
-    .arrow {
-      font-size: 24px;
-      margin: 0 20px;
-      cursor: pointer;
+    input[type="password"] {
+      font-family: sans-serif;
     }
-    .week-number {
-      font-size: 18px;
+    .row {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+    .hidden {
+      display: none;
     }
   </style>
 </head>
 <body>
-  <header>FF-Typer</header>
-  <div class="week-selector">
-    <div class="arrow" onclick="previousWeek()">←</div>
-    <div class="week-number" id="week-number">Kolejka 1</div>
-    <div class="arrow" onclick="nextWeek()">→</div>
-  </div>
-  <div id="matches"></div>  <script>
-    const allFixtures = [
-      [
-        { home: "Lech Poznań", away: "Pogoń Szczecin" },
-        { home: "Zagłębie Lubin", away: "Radomiak Radom" },
-        { home: "Widzew Łódź", away: "Cracovia" },
-        { home: "Stal Mielec", away: "Korona Kielce" },
-        { home: "Jagiellonia Białystok", away: "Warta Poznań" },
-        { home: "Piast Gliwice", away: "Legia Warszawa" },
-        { home: "Górnik Zabrze", away: "Lechia Gdańsk" },
-        { home: "Wisła Kraków", away: "GKS Katowice" }
-      ]
-    ];
+  <h1>FF-Typer</h1>
+  <div id="auth">
+    <div id="register" class="form">
+      <h2>Rejestracja</h2>
+      <input type="text" id="regNick" placeholder="Nick" required />
+      <select id="regPlatform">
+        <option value="YouTube">YouTube</option>
+        <option value="Instagram">Instagram</option>
+        <option value="TikTok">TikTok</option>
+      </select>
+      <input type="email" id="regEmail" placeholder="Email" required />
+      <input type="password" id="regPassword" placeholder="Hasło" required />
+      <label>
+        <input type="checkbox" id="showPasswordReg"> Pokaż hasło
+      </label>
+      <button onclick="register()">Zarejestruj się</button>
+      <p>Masz już konto? <a href="#" onclick="toggleForm()">Zaloguj się</a></p>
+    </div><div id="login" class="form hidden">
+  <h2>Logowanie</h2>
+  <input type="text" id="logNick" placeholder="Nick" required />
+  <input type="password" id="logPassword" placeholder="Hasło" required />
+  <label>
+    <input type="checkbox" id="showPasswordLogin"> Pokaż hasło
+  </label>
+  <button onclick="login()">Zaloguj się</button>
+  <p>Nie masz konta? <a href="#" onclick="toggleForm()">Zarejestruj się</a></p>
+</div>
 
-    let currentWeek = 0;
+  </div>  <div id="main" class="hidden">
+    <h2>Witaj, <span id="userName"></span> z <span id="userPlatform"></span>!</h2>
+    <p>Możesz teraz typować mecze!</p>
+  </div>  <script>
+    const registerForm = document.getElementById('register');
+    const loginForm = document.getElementById('login');
+    const mainDiv = document.getElementById('main');
 
-    function renderMatches() {
-      const matchesDiv = document.getElementById("matches");
-      matchesDiv.innerHTML = "";
-      document.getElementById("week-number").textContent = `Kolejka ${currentWeek + 1}`;
-      const fixtures = allFixtures[currentWeek];
-      fixtures.forEach(match => {
-        const matchEl = document.createElement("div");
-        matchEl.className = "match";
-        matchEl.innerHTML = `
-          <div class="teams">${match.home} vs ${match.away}</div>
-          <div class="inputs">
-            <input type="text" inputmode="numeric" placeholder="0" />
-            <input type="text" inputmode="numeric" placeholder="0" />
-          </div>
-          <button>Zatwierdź</button>
-        `;
-        matchesDiv.appendChild(matchEl);
-      });
+    document.getElementById('showPasswordReg').addEventListener('change', e => {
+      document.getElementById('regPassword').type = e.target.checked ? 'text' : 'password';
+    });
+
+    document.getElementById('showPasswordLogin').addEventListener('change', e => {
+      document.getElementById('logPassword').type = e.target.checked ? 'text' : 'password';
+    });
+
+    function toggleForm() {
+      registerForm.classList.toggle('hidden');
+      loginForm.classList.toggle('hidden');
     }
 
-    function previousWeek() {
-      if (currentWeek > 0) {
-        currentWeek--;
-        renderMatches();
+    function validateEmail(email) {
+      const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      return re.test(email);
+    }
+
+    function register() {
+      const nick = document.getElementById('regNick').value;
+      const platform = document.getElementById('regPlatform').value;
+      const email = document.getElementById('regEmail').value;
+      const password = document.getElementById('regPassword').value;
+
+      if (!validateEmail(email)) {
+        alert("Podano nieprawidłowy email");
+        return;
       }
+
+      localStorage.setItem('ff_user', JSON.stringify({ nick, platform, password, email }));
+      alert("Zarejestrowano! Możesz się zalogować.");
+      toggleForm();
     }
 
-    function nextWeek() {
-      if (currentWeek < allFixtures.length - 1) {
-        currentWeek++;
-        renderMatches();
+    function login() {
+      const nick = document.getElementById('logNick').value;
+      const password = document.getElementById('logPassword').value;
+      const stored = JSON.parse(localStorage.getItem('ff_user'));
+
+      if (!stored || stored.nick !== nick || stored.password !== password) {
+        alert("Błędny nick lub hasło!");
+        return;
       }
-    }
 
-    renderMatches();
+      document.getElementById('userName').textContent = stored.nick;
+      document.getElementById('userPlatform').textContent = stored.platform;
+      document.getElementById('auth').classList.add('hidden');
+      mainDiv.classList.remove('hidden');
+    }
   </script></body>
 </html>
-      
