@@ -1,104 +1,107 @@
 <!DOCTYPE html>
 <html lang="pl">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>FF-Typer – Rejestracja</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Rejestracja | Football Fans</title>
   <style>
     body {
       font-family: Arial, sans-serif;
-      background: #0a0f24;
-      color: #fff;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      padding: 30px;
+      background: linear-gradient(to right, #002244, #004080);
+      color: white;
+      text-align: center;
+      padding: 40px 10px;
     }
+
     h1 {
       margin-bottom: 20px;
-      color: #00bfff;
     }
+
     form {
-      background: #1a1f38;
-      padding: 20px;
-      border-radius: 10px;
-      width: 100%;
       max-width: 400px;
+      margin: 0 auto;
+      background-color: rgba(255, 255, 255, 0.05);
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 0 15px rgba(0,0,0,0.3);
     }
+
+    label {
+      display: block;
+      margin-top: 15px;
+      font-size: 14px;
+      text-align: left;
+    }
+
     input, select {
       width: 100%;
       padding: 10px;
-      margin: 10px 0;
-      border: none;
+      margin-top: 5px;
       border-radius: 5px;
+      border: none;
+      font-size: 14px;
     }
-    button {
-      width: 100%;
-      padding: 10px;
-      background: #00bfff;
-      color: #fff;
-      border: none;
-      border-radius: 5px;
-      font-size: 16px;
+
+    input[type="submit"] {
+      margin-top: 20px;
+      background-color: #00cc66;
+      color: white;
       cursor: pointer;
+      transition: background 0.3s;
     }
-    .password-toggle {
-      display: flex;
-      align-items: center;
-      margin-bottom: 10px;
+
+    input[type="submit"]:hover {
+      background-color: #00994d;
     }
-    .password-toggle input[type="checkbox"] {
-      margin-right: 10px;
+
+    .toggle-password {
+      margin-top: 8px;
+      font-size: 13px;
+      cursor: pointer;
+      color: #ccc;
+      text-align: right;
     }
   </style>
 </head>
 <body>
-  <h1>Rejestracja do FF-Typer</h1>
-  <form onsubmit="submitForm(event)">
-    <label>Nick:</label>
-    <input type="text" id="nick" required />
+  <h1>Rejestracja - Football Fans</h1>
+  <form id="registerForm">
+    <label for="nick">Nick</label>
+    <input type="text" id="nick" name="nick" required>
 
-    <label>Platforma:</label>
-    <select id="platform" required>
+    <label for="platform">Platforma</label>
+    <select id="platform" name="platform" required>
+      <option value="">Wybierz</option>
       <option value="YouTube">YouTube</option>
       <option value="Instagram">Instagram</option>
       <option value="TikTok">TikTok</option>
     </select>
 
-    <label>Email:</label>
-    <input type="email" id="email" required />
+    <label for="email">E-mail</label>
+    <input type="email" id="email" name="email" required>
 
-    <label>Hasło:</label>
-    <input type="password" id="password" required />
+    <label for="password">Hasło</label>
+    <input type="password" id="password" name="password" required>
+    <div class="toggle-password" onclick="togglePassword()">Pokaż/Ukryj hasło</div>
 
-    <div class="password-toggle">
-      <input type="checkbox" id="showPassword" onchange="togglePassword()" />
-      <label for="showPassword">Pokaż hasło</label>
-    </div>
-
-    <button type="submit">Zarejestruj się</button>
+    <input type="submit" value="Zarejestruj się">
   </form>
 
   <script>
     function togglePassword() {
-      const passwordInput = document.getElementById("password");
-      passwordInput.type = passwordInput.type === "password" ? "text" : "password";
+      const input = document.getElementById("password");
+      if (input.type === "password") {
+        input.type = "text";
+      } else {
+        input.type = "password";
+      }
     }
 
-    function submitForm(event) {
-      event.preventDefault();
-      const nick = document.getElementById("nick").value;
-      const platform = document.getElementById("platform").value;
-      const email = document.getElementById("email").value;
-      const password = document.getElementById("password").value;
-
-      console.log("Nick:", nick);
-      console.log("Platforma:", platform);
-      console.log("Email:", email);
-      console.log("Hasło:", password);
-
-      alert("Dziękujemy za rejestrację! (Dane zapisane w konsoli)");
-    }
+    document.getElementById("registerForm").addEventListener("submit", function(e) {
+      e.preventDefault();
+      alert("Rejestracja zakończona!");
+      // Tutaj będzie backend do zapisywania danych np. do bazy danych
+    });
   </script>
 </body>
 </html>
