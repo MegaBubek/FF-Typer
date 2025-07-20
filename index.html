@@ -1,103 +1,176 @@
 <!DOCTYPE html><html lang="pl">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>FF-Typer</title>
   <style>
-    body { font-family: Arial, sans-serif; background-color: #121212; color: white; margin: 0; padding: 20px; }
-    .hidden { display: none; }
-    .form-group { margin-bottom: 10px; }
-    input, select { padding: 5px; width: 100%; }
-    button { padding: 10px 15px; background-color: #00aaff; border: none; color: white; cursor: pointer; }
-    .match { margin-bottom: 10px; display: flex; align-items: center; justify-content: space-between; }
-    .score-input { width: 40px; text-align: center; font-size: 16px; }
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #111;
+      color: #fff;
+      margin: 0;
+      padding: 0;
+    }.container {
+  max-width: 600px;
+  margin: auto;
+  padding: 20px;
+}
+
+h1 {
+  text-align: center;
+  margin-bottom: 30px;
+  font-size: 24px;
+  color: #00ffcc;
+}
+
+.match {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: #222;
+  padding: 10px;
+  margin-bottom: 10px;
+  border-radius: 8px;
+}
+
+.match span {
+  flex: 1;
+  text-align: center;
+}
+
+.score-input {
+  width: 40px;
+  padding: 5px;
+  font-size: 16px;
+  text-align: center;
+  border-radius: 4px;
+  border: none;
+  margin: 0 5px;
+}
+
+.submit-btn, .auth-btn {
+  margin-left: 10px;
+  padding: 5px 10px;
+  font-size: 14px;
+  background-color: #00cc66;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.auth-btn:hover, .submit-btn:hover {
+  background-color: #00aa55;
+}
+
+#authContainer {
+  display: none;
+  flex-direction: column;
+  gap: 10px;
+}
+
+input[type="text"], input[type="email"], input[type="password"] {
+  padding: 8px;
+  font-size: 16px;
+  border-radius: 5px;
+  border: none;
+}
+
   </style>
 </head>
-<body>  <div id="register">
-    <h2>Rejestracja</h2>
-    <div class="form-group"><input type="text" id="regNick" placeholder="Nick"></div>
-    <div class="form-group">
-      <select id="regPlatform">
-        <option value="YouTube">YouTube</option>
-        <option value="Instagram">Instagram</option>
-        <option value="TikTok">TikTok</option>
-      </select>
-    </div>
-    <div class="form-group"><input type="email" id="regEmail" placeholder="Email"></div>
-    <div class="form-group"><input type="password" id="regPass" placeholder="Hasło"></div>
-    <button onclick="register()">Zarejestruj</button>
-  </div>  <div id="login" class="hidden">
-    <h2>Logowanie</h2>
-    <div class="form-group"><input type="email" id="logEmail" placeholder="Email"></div>
-    <div class="form-group"><input type="password" id="logPass" placeholder="Hasło"></div>
-    <button onclick="login()">Zaloguj</button>
-  </div>  <div id="main" class="hidden">
-    <h2>Typer Ekstraklasa - Kolejka 1</h2>
-    <div id="matches"></div>
+<body>
+  <div class="container">
+    <div id="authContainer">
+      <h1>Rejestracja</h1>
+      <input type="text" id="regNick" placeholder="Nick" />
+      <input type="text" id="regPlatform" placeholder="Platforma (YT/IG/TT)" />
+      <input type="password" id="regPassword" placeholder="Hasło" />
+      <input type="email" id="regEmail" placeholder="Email" />
+      <button class="auth-btn" onclick="register()">Zarejestruj</button><h1>Logowanie</h1>
+  <input type="text" id="loginNick" placeholder="Nick lub Email" />
+  <input type="password" id="loginPassword" placeholder="Hasło" />
+  <button class="auth-btn" onclick="login()">Zaloguj</button>
+</div>
+
+<div id="mainApp" style="display: none;">
+  <h1>FF-Typer - 1. kolejka Ekstraklasy</h1>
+  <div id="matches"></div>
+</div>
+
   </div>  <script>
     const matches = [
       ["Legia", "Zagłębie"],
-      ["Lech", "Cracovia"],
-      ["Pogoń", "Górnik"],
-      ["Jagiellonia", "Korona"],
-      ["Piast", "ŁKS"],
-      ["Raków", "Radomiak"],
-      ["Wisła Płock", "Widzew"],
-      ["Stal Mielec", "Polonia"],
-      ["Zawisza", "Motor"]
+      ["Cracovia", "Raków"],
+      ["Korona", "Widzew"],
+      ["Górnik", "Jagiellonia"],
+      ["Pogoń", "Lech"],
+      ["Lechia", "Piast"],
+      ["Stal", "ŁKS"],
+      ["Wisła Płock", "Radomiak"],
+      ["Polonia Warszawa", "GKS Katowice"]
     ];
 
-    const stored = localStorage.getItem("user");
-    if (stored) showMain(); else document.getElementById("register").classList.remove("hidden");
+    const container = document.getElementById("matches");
 
-    function register() {
-      const user = {
-        nick: document.getElementById("regNick").value,
-        platform: document.getElementById("regPlatform").value,
-        email: document.getElementById("regEmail").value,
-        pass: document.getElementById("regPass").value
-      };
-      localStorage.setItem("user", JSON.stringify(user));
-      showLogin();
-    }
-
-    function showLogin() {
-      document.getElementById("register").classList.add("hidden");
-      document.getElementById("login").classList.remove("hidden");
-    }
-
-    function login() {
-      const email = document.getElementById("logEmail").value;
-      const pass = document.getElementById("logPass").value;
-      const storedUser = JSON.parse(localStorage.getItem("user"));
-      if (storedUser && storedUser.email === email && storedUser.pass === pass) {
-        showMain();
-      } else {
-        alert("Nieprawidłowe dane logowania");
-      }
-    }
-
-    function showMain() {
-      document.getElementById("register").classList.add("hidden");
-      document.getElementById("login").classList.add("hidden");
-      document.getElementById("main").classList.remove("hidden");
-      renderMatches();
-    }
-
-    function renderMatches() {
-      const container = document.getElementById("matches");
+    function showMatches() {
       container.innerHTML = "";
       matches.forEach(([home, away], index) => {
         const div = document.createElement("div");
         div.className = "match";
         div.innerHTML = `
           <span>${home}</span>
-          <input class="score-input" type="number" min="0" max="99" pattern="[0-9]*" inputmode="numeric" id="home${index}">
-          <input class="score-input" type="number" min="0" max="99" pattern="[0-9]*" inputmode="numeric" id="away${index}">
+          <input class="score-input" type="number" min="0" max="99" id="scoreA${index}">
+          <input class="score-input" type="number" min="0" max="99" id="scoreB${index}">
           <span>${away}</span>
+          <button class="submit-btn" onclick="submit(${index})">Zatwierdź</button>
         `;
         container.appendChild(div);
       });
     }
+
+    function submit(index) {
+      const scoreA = document.getElementById(`scoreA${index}`).value;
+      const scoreB = document.getElementById(`scoreB${index}`).value;
+      if (scoreA === "" || scoreB === "") {
+        alert("Wpisz oba wyniki!");
+        return;
+      }
+      console.log(`Zatwierdzono: ${matches[index][0]} ${scoreA} - ${scoreB} ${matches[index][1]}`);
+    }
+
+    function register() {
+      const nick = document.getElementById("regNick").value;
+      const platform = document.getElementById("regPlatform").value;
+      const password = document.getElementById("regPassword").value;
+      const email = document.getElementById("regEmail").value;
+      if (!nick || !platform || !password || !email) return alert("Wypełnij wszystkie pola");
+      localStorage.setItem("user", JSON.stringify({ nick, platform, password, email }));
+      document.getElementById("authContainer").style.display = "none";
+      document.getElementById("mainApp").style.display = "block";
+      showMatches();
+    }
+
+    function login() {
+      const nick = document.getElementById("loginNick").value;
+      const password = document.getElementById("loginPassword").value;
+      const saved = JSON.parse(localStorage.getItem("user"));
+      if (!saved) return alert("Brak konta!");
+      if ((saved.nick === nick || saved.email === nick) && saved.password === password) {
+        document.getElementById("authContainer").style.display = "none";
+        document.getElementById("mainApp").style.display = "block";
+        showMatches();
+      } else {
+        alert("Nieprawidłowe dane logowania");
+      }
+    }
+
+    window.onload = () => {
+      const saved = localStorage.getItem("user");
+      if (saved) {
+        document.getElementById("authContainer").style.display = "block";
+      } else {
+        document.getElementById("authContainer").style.display = "block";
+      }
+    };
   </script></body>
-</html
+</html>
