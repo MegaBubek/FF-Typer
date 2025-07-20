@@ -1,132 +1,136 @@
 <!DOCTYPE html><html lang="pl">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Football Fans</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>FF-Typer</title>
   <style>
     body {
-      margin: 0;
       font-family: Arial, sans-serif;
-      background-color: #0d1b2a;
+      background-color: #0f172a;
       color: white;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
+      margin: 0;
       padding: 20px;
     }
-    .container {
-      max-width: 600px;
-      width: 100%;
+    h1 {
+      text-align: center;
+      color: #22c55e;
     }
-    input, select, button {
-      width: 100%;
-      margin: 5px 0;
-      padding: 10px;
-      font-size: 1em;
-      border-radius: 8px;
-      border: none;
-    }
-    button {
-      background-color: #1f7a8c;
-      color: white;
-      font-weight: bold;
-    }
-    .hidden {
-      display: none;
-    }
-    .logout {
-      margin-top: 20px;
-      background: #e63946;
-    }
-    .match-row {
+    .match {
       display: flex;
-      justify-content: space-between;
       align-items: center;
-      background: #1b263b;
-      margin: 5px 0;
+      justify-content: space-between;
+      background-color: #1e293b;
       padding: 10px;
+      margin-bottom: 10px;
       border-radius: 8px;
+    }
+    .team {
+      flex: 1;
+      text-align: center;
     }
     .score-inputs {
       display: flex;
-      gap: 10px;
+      gap: 5px;
     }
     .score-inputs input {
-      width: 50px;
+      width: 40px;
+      padding: 5px;
+      font-size: 16px;
       text-align: center;
+    }
+    button {
+      padding: 6px 12px;
+      background-color: #3b82f6;
+      border: none;
+      color: white;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #2563eb;
     }
   </style>
 </head>
 <body>
-  <div class="container">
-    <div id="register">
-      <h2>Rejestracja</h2>
-      <input type="text" id="nickname" placeholder="Nick" required />
-      <select id="platform">
-        <option value="">Wybierz platformę</option>
-        <option value="YouTube">YouTube</option>
-        <option value="Instagram">Instagram</option>
-        <option value="TikTok">TikTok</option>
-      </select>
-      <input type="email" id="email" placeholder="Email" required />
-      <input type="password" id="password" placeholder="Hasło" required />
-      <button onclick="registerUser()">Zarejestruj się</button>
-    </div><div id="mainPage" class="hidden">
-  <h2>Witaj w FF-Typer!</h2>
-  <div id="matchList">
-    <div class="match-row">
-      <span>Legia - Lech</span>
+  <h1>FF-Typer - Ekstraklasa 2025/26</h1>  <div id="matches">
+    <div class="match">
+      <div class="team">Lech Poznań</div>
       <div class="score-inputs">
-        <input type="number" inputmode="numeric" min="0" max="99" />
-        <input type="number" inputmode="numeric" min="0" max="99" />
+        <input type="number" min="0" max="99" inputmode="numeric" />
+        <input type="number" min="0" max="99" inputmode="numeric" />
       </div>
-    </div>
-    <div class="match-row">
-      <span>Jagiellonia - Górnik</span>
-      <div class="score-inputs">
-        <input type="number" inputmode="numeric" min="0" max="99" />
-        <input type="number" inputmode="numeric" min="0" max="99" />
-      </div>
-    </div>
-    <!-- Dodaj kolejne mecze tutaj -->
+      <div class="team">Pogoń Szczecin</div>
+      <button>Zatwierdź</button>
+    </div><div class="match">
+  <div class="team">Legia Warszawa</div>
+  <div class="score-inputs">
+    <input type="number" min="0" max="99" inputmode="numeric" />
+    <input type="number" min="0" max="99" inputmode="numeric" />
   </div>
-  <button class="logout" onclick="logout()">Wyloguj</button>
+  <div class="team">Zagłębie Lubin</div>
+  <button>Zatwierdź</button>
 </div>
 
-  </div>  <script>
-    const registerDiv = document.getElementById("register");
-    const mainPage = document.getElementById("mainPage");
+<div class="match">
+  <div class="team">Raków Częstochowa</div>
+  <div class="score-inputs">
+    <input type="number" min="0" max="99" inputmode="numeric" />
+    <input type="number" min="0" max="99" inputmode="numeric" />
+  </div>
+  <div class="team">Korona Kielce</div>
+  <button>Zatwierdź</button>
+</div>
 
-    function registerUser() {
-      const nick = document.getElementById("nickname").value.trim();
-      const platform = document.getElementById("platform").value;
-      const email = document.getElementById("email").value.trim();
-      const password = document.getElementById("password").value;
+<div class="match">
+  <div class="team">Widzew Łódź</div>
+  <div class="score-inputs">
+    <input type="number" min="0" max="99" inputmode="numeric" />
+    <input type="number" min="0" max="99" inputmode="numeric" />
+  </div>
+  <div class="team">Stal Mielec</div>
+  <button>Zatwierdź</button>
+</div>
 
-      if (!nick || !platform || !email || !password) {
-        alert("Uzupełnij wszystkie pola!");
-        return;
-      }
+<div class="match">
+  <div class="team">Cracovia</div>
+  <div class="score-inputs">
+    <input type="number" min="0" max="99" inputmode="numeric" />
+    <input type="number" min="0" max="99" inputmode="numeric" />
+  </div>
+  <div class="team">Górnik Zabrze</div>
+  <button>Zatwierdź</button>
+</div>
 
-      const user = { nick, platform, email };
-      localStorage.setItem("userFF", JSON.stringify(user));
+<div class="match">
+  <div class="team">Piast Gliwice</div>
+  <div class="score-inputs">
+    <input type="number" min="0" max="99" inputmode="numeric" />
+    <input type="number" min="0" max="99" inputmode="numeric" />
+  </div>
+  <div class="team">Jagiellonia Białystok</div>
+  <button>Zatwierdź</button>
+</div>
 
-      showMainPage();
-    }
+<div class="match">
+  <div class="team">ŁKS Łódź</div>
+  <div class="score-inputs">
+    <input type="number" min="0" max="99" inputmode="numeric" />
+    <input type="number" min="0" max="99" inputmode="numeric" />
+  </div>
+  <div class="team">Wisła Kraków</div>
+  <button>Zatwierdź</button>
+</div>
 
-    function showMainPage() {
-      registerDiv.classList.add("hidden");
-      mainPage.classList.remove("hidden");
-    }
+<div class="match">
+  <div class="team">GKS Katowice</div>
+  <div class="score-inputs">
+    <input type="number" min="0" max="99" inputmode="numeric" />
+    <input type="number" min="0" max="99" inputmode="numeric" />
+  </div>
+  <div class="team">Motor Lublin</div>
+  <button>Zatwierdź</button>
+</div>
 
-    function logout() {
-      localStorage.removeItem("userFF");
-      location.reload();
-    }
-
-    const savedUser = localStorage.getItem("userFF");
-    if (savedUser) {
-      showMainPage();
-    }
-  </script></body>
+  </div>
+</body>
 </html>
