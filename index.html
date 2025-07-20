@@ -1,187 +1,105 @@
-<!DOCTYPE html><html lang="pl"><head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FF-Typer</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 0;
-            background-color: #0a0f1c;
-            color: white;
-        }header {
-        background-color: #1c2541;
-        padding: 1rem;
-        text-align: center;
-        font-size: 1.5rem;
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Football Fans</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background-color: #0d1b2a;
+      color: white;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 20px;
     }
-
     .container {
-        padding: 2rem;
-        max-width: 800px;
-        margin: auto;
+      max-width: 500px;
+      width: 100%;
     }
-
-    .match {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        background-color: #3a506b;
-        margin-bottom: 1rem;
-        padding: 1rem;
-        border-radius: 8px;
+    input, select, button {
+      width: 100%;
+      margin: 5px 0;
+      padding: 10px;
+      font-size: 1em;
+      border-radius: 8px;
+      border: none;
     }
-
-    .match input[type="number"] {
-        width: 40px;
-        padding: 0.3rem;
-        font-size: 1rem;
-        text-align: center;
+    button {
+      background-color: #1f7a8c;
+      color: white;
+      font-weight: bold;
     }
-
-    .match button {
-        padding: 0.5rem 1rem;
-        background-color: #1c873b;
-        color: white;
-        border: none;
-        border-radius: 5px;
-        cursor: pointer;
+    .hidden {
+      display: none;
     }
-
-    .arrow-container {
-        display: flex;
-        justify-content: space-between;
-        margin-bottom: 1rem;
+    .logout {
+      margin-top: 20px;
+      background: #e63946;
     }
-
-    .arrow-container button {
-        padding: 0.5rem 1rem;
-        background-color: #1c2541;
-        color: white;
-        border: none;
-        border-radius: 5px;
-        cursor: pointer;
-    }
-
-    #authContainer {
-        max-width: 400px;
-        margin: 50px auto;
-        background: #1c2541;
-        padding: 2rem;
-        border-radius: 10px;
-    }
-
-    #authContainer input, #authContainer select {
-        width: 100%;
-        margin-bottom: 1rem;
-        padding: 0.5rem;
-        font-size: 1rem;
-        border-radius: 5px;
-        border: none;
-    }
-
-    #authContainer button {
-        padding: 0.5rem;
-        width: 100%;
-        background-color: #1c873b;
-        color: white;
-        border: none;
-        border-radius: 5px;
-        font-size: 1rem;
-        cursor: pointer;
-    }
-</style>
-
-</head><body>
-    <header>FF-Typer</header><div id="authContainer">
-    <h2>Zarejestruj się</h2>
-    <input type="text" id="regNick" placeholder="Nick">
-    <select id="regPlatform">
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div id="register">
+      <h2>Rejestracja</h2>
+      <input type="text" id="nickname" placeholder="Nick" required />
+      <select id="platform">
+        <option value="">Wybierz platformę</option>
         <option value="YouTube">YouTube</option>
         <option value="Instagram">Instagram</option>
         <option value="TikTok">TikTok</option>
-    </select>
-    <input type="email" id="regEmail" placeholder="Email">
-    <input type="password" id="regPassword" placeholder="Hasło">
-    <button onclick="register()">Zarejestruj się</button>
-</div>
-
-<div id="mainContainer" class="container" style="display:none">
-    <div class="arrow-container">
-        <button onclick="prevRound()">&larr;</button>
-        <span id="roundLabel">Kolejka 1</span>
-        <button onclick="nextRound()">&rarr;</button>
+      </select>
+      <input type="email" id="email" placeholder="Email" required />
+      <input type="password" id="password" placeholder="Hasło" required />
+      <button onclick="registerUser()">Zarejestruj się</button>
     </div>
-    <div id="matches"></div>
-</div>
 
-<script>
-    const fixtures = [
-        ["Legia Warszawa", "Raków Częstochowa"],
-        ["Lech Poznań", "Górnik Zabrze"],
-        ["Wisła Kraków", "Cracovia"],
-        ["Jagiellonia Białystok", "Zagłębie Lubin"],
-        ["Pogoń Szczecin", "Widzew Łódź"],
-        ["Korona Kielce", "Piast Gliwice"],
-        ["Radomiak Radom", "Stal Mielec"],
-        ["GKS Katowice", "Arka Gdynia"]
-    ];
+    <div id="mainPage" class="hidden">
+      <h2>Witaj w FF-Typer!</h2>
+      <p>Tu będzie strona główna z typerem, terminarzem itd.</p>
+      <button class="logout" onclick="logout()">Wyloguj</button>
+    </div>
+  </div>
 
-    let currentRound = 1;
+  <script>
+    const registerDiv = document.getElementById("register");
+    const mainPage = document.getElementById("mainPage");
 
-    function showMatches(round) {
-        document.getElementById("roundLabel").textContent = `Kolejka ${round}`;
-        const matchesContainer = document.getElementById("matches");
-        matchesContainer.innerHTML = "";
-        fixtures.forEach(match => {
-            const matchDiv = document.createElement("div");
-            matchDiv.className = "match";
-            matchDiv.innerHTML = `
-                <span>${match[0]} vs ${match[1]}</span>
-                <input type="number" min="0" max="99"> :
-                <input type="number" min="0" max="99">
-                <button>Zatwierdź</button>
-            `;
-            matchesContainer.appendChild(matchDiv);
-        });
+    function registerUser() {
+      const nick = document.getElementById("nickname").value.trim();
+      const platform = document.getElementById("platform").value;
+      const email = document.getElementById("email").value.trim();
+      const password = document.getElementById("password").value;
+
+      if (!nick || !platform || !email || !password) {
+        alert("Uzupełnij wszystkie pola!");
+        return;
+      }
+
+      const user = { nick, platform, email };
+      localStorage.setItem("userFF", JSON.stringify(user));
+
+      showMainPage();
     }
 
-    function prevRound() {
-        if (currentRound > 1) {
-            currentRound--;
-            showMatches(currentRound);
-        }
+    function showMainPage() {
+      registerDiv.classList.add("hidden");
+      mainPage.classList.remove("hidden");
     }
 
-    function nextRound() {
-        currentRound++;
-        showMatches(currentRound);
+    function logout() {
+      localStorage.removeItem("userFF");
+      location.reload();
     }
 
-    function register() {
-        const nick = document.getElementById("regNick").value;
-        const platform = document.getElementById("regPlatform").value;
-        const email = document.getElementById("regEmail").value;
-        const password = document.getElementById("regPassword").value;
-
-        if (!nick || !platform || !email || !password) {
-            alert("Uzupełnij wszystkie pola");
-            return;
-        }
-
-        localStorage.setItem("ff_user", JSON.stringify({ nick, platform, email, password }));
-        document.getElementById("authContainer").style.display = "none";
-        document.getElementById("mainContainer").style.display = "block";
-        showMatches(currentRound);
+    // Automatyczne logowanie
+    const savedUser = localStorage.getItem("userFF");
+    if (savedUser) {
+      showMainPage();
     }
-
-    window.onload = function () {
-        const user = JSON.parse(localStorage.getItem("ff_user"));
-        if (user) {
-            document.getElementById("authContainer").style.display = "none";
-            document.getElementById("mainContainer").style.display = "block";
-            showMatches(currentRound);
-        }
-    };
-</script>
-
-</body></html>
+  </script>
+</body>
+</html>
