@@ -1,86 +1,133 @@
 <!DOCTYPE html><html lang="pl">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>FF-Typer - Ekstraklasa</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>FF-Typer</title>
   <style>
-    body { font-family: Arial, sans-serif; background-color: #0d1117; color: white; margin: 0; padding: 20px; text-align: center; }
-    h1 { color: #00ff88; }
-    .match { background-color: #161b22; margin: 10px auto; padding: 10px; border-radius: 10px; max-width: 400px; display: flex; justify-content: space-between; align-items: center; }
-    .team { width: 35%; text-align: center; }
-    .score-input { width: 30px; padding: 5px; font-size: 1rem; text-align: center; border-radius: 5px; border: none; margin: 0 5px; }
-    .nav-buttons { margin: 20px; }
-    button { padding: 10px 20px; font-size: 1rem; background-color: #238636; color: white; border: none; border-radius: 5px; cursor: pointer; }
-    .confirm-btn { background-color: #f97316; margin-top: 10px; }
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #0e1a2b;
+      color: #fff;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    h1 {
+      margin: 20px 0 10px;
+      color: #00ff88;
+    }
+    .match-day {
+      margin: 10px 0;
+      display: flex;
+      align-items: center;
+    }
+    .arrow {
+      background-color: #0055ff;
+      border: none;
+      color: white;
+      padding: 5px 10px;
+      cursor: pointer;
+      font-size: 16px;
+      margin: 0 10px;
+      border-radius: 5px;
+    }
+    .matches {
+      max-width: 400px;
+      width: 100%;
+    }
+    .match {
+      background-color: #1c2e4a;
+      padding: 10px;
+      margin: 10px 0;
+      border-radius: 10px;
+      text-align: center;
+    }
+    .score-inputs {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      margin-top: 10px;
+    }
+    input[type="number"] {
+      width: 40px;
+      padding: 5px;
+      text-align: center;
+      font-size: 16px;
+      border-radius: 5px;
+      border: none;
+      background-color: #e0e0e0;
+      color: #000;
+    }
+    button.confirm {
+      margin-top: 10px;
+      background-color: #00cc66;
+      color: white;
+      border: none;
+      padding: 5px 10px;
+      font-size: 14px;
+      cursor: pointer;
+      border-radius: 5px;
+    }
   </style>
 </head>
 <body>
-  <h1>FF-Typer - Ekstraklasa</h1>
-  <h2 id="round-title">Kolejka 1</h2>
-  <div id="matches"></div>
-  <div class="nav-buttons">
-    <button onclick="prevRound()">← Poprzednia</button>
-    <button onclick="nextRound()">Następna →</button>
-  </div>  <script>
-    const rounds = [
+  <h1>FF-Typer</h1>
+  <div class="match-day">
+    <button class="arrow" onclick="changeMatchday(-1)">&larr;</button>
+    <h2 id="matchday-title">Kolejka 1</h2>
+    <button class="arrow" onclick="changeMatchday(1)">&rarr;</button>
+  </div>
+  <div class="matches" id="matches"></div>  <script>
+    const matchdays = [
       [
-        ["Górnik Zabrze", "Puszcza Niepołomice"],
-        ["Jagiellonia Białystok", "Ruch Chorzów"],
-        ["Korona Kielce", "GKS Katowice"],
-        ["Legia Warszawa", "Zagłębie Lubin"],
-        ["Lech Poznań", "Śląsk Wrocław"],
-        ["ŁKS Łódź", "Piast Gliwice"],
-        ["Radomiak Radom", "Cracovia"],
-        ["Warta Poznań", "Wisła Kraków"]
+        { home: "Lech Poznań", away: "Radomiak Radom" },
+        { home: "Korona Kielce", away: "Widzew Łódź" },
+        { home: "Piast Gliwice", away: "Cracovia" },
+        { home: "Legia Warszawa", away: "Zagłębie Lubin" },
+        { home: "Jagiellonia Białystok", away: "Lechia Gdańsk" },
+        { home: "Pogoń Szczecin", away: "Stal Mielec" },
+        { home: "Górnik Zabrze", away: "GKS Katowice" },
+        { home: "Wisła Kraków", away: "ŁKS Łódź" }
       ]
     ];
 
-    let currentRound = 0;
+    let currentMatchday = 0;
 
-    function renderRound() {
-      const matchContainer = document.getElementById("matches");
-      const roundTitle = document.getElementById("round-title");
-      matchContainer.innerHTML = "";
-      roundTitle.textContent = `Kolejka ${currentRound + 1}`;
-
-      rounds[currentRound].forEach((match, index) => {
-        const div = document.createElement("div");
-        div.className = "match";
-        div.innerHTML = `
-          <div class="team">${match[0]}</div>
-          <div>
-            <input type="number" class="score-input" inputmode="numeric" pattern="[0-9]*" id="score-${index}-1">
-            :
-            <input type="number" class="score-input" inputmode="numeric" pattern="[0-9]*" id="score-${index}-2">
-            <br>
-            <button class="confirm-btn" onclick="confirmResult(${index})">Zatwierdź</button>
+    function renderMatches() {
+      const matchesDiv = document.getElementById("matches");
+      matchesDiv.innerHTML = "";
+      document.getElementById("matchday-title").textContent = `Kolejka ${currentMatchday + 1}`;
+      matchdays[currentMatchday].forEach((match, index) => {
+        const matchEl = document.createElement("div");
+        matchEl.className = "match";
+        matchEl.innerHTML = `
+          <div><strong>${match.home}</strong> vs <strong>${match.away}</strong></div>
+          <div class="score-inputs">
+            <input type="number" inputmode="numeric" min="0" max="99" id="home-${index}" placeholder="0">
+            <input type="number" inputmode="numeric" min="0" max="99" id="away-${index}" placeholder="0">
           </div>
-          <div class="team">${match[1]}</div>
+          <button class="confirm" onclick="submitScore(${index})">Zatwierdź</button>
         `;
-        matchContainer.appendChild(div);
+        matchesDiv.appendChild(matchEl);
       });
     }
 
-    function confirmResult(index) {
-      const s1 = document.getElementById(`score-${index}-1`).value;
-      const s2 = document.getElementById(`score-${index}-2`).value;
-      alert(`Zatwierdzono wynik: ${s1}-${s2}`);
-    }
-
-    function nextRound() {
-      if (currentRound < rounds.length - 1) {
-        currentRound++;
-        renderRound();
+    function changeMatchday(offset) {
+      const newIndex = currentMatchday + offset;
+      if (newIndex >= 0 && newIndex < matchdays.length) {
+        currentMatchday = newIndex;
+        renderMatches();
       }
     }
 
-    function prevRound() {
-      if (currentRound > 0) {
-        currentRound--;
-        renderRound();
-      }
+    function submitScore(index) {
+      const home = document.getElementById(`home-${index}`).value;
+      const away = document.getElementById(`away-${index}`).value;
+      // Tu możesz dodać zapis do localStorage lub wysłanie na serwer w przyszłości
     }
 
-    renderRound();
+    renderMatches();
   </script></body>
 </html>
