@@ -2,166 +2,124 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Football Fans Typer</title>
+  <title>FF-Typer</title>
   <style>
     body {
       font-family: Arial, sans-serif;
-      background-color: #121212;
-      color: white;
+      background-color: #f1f1f1;
       padding: 20px;
+    }
+    h1 {
       text-align: center;
     }
-    input[type="text"], input[type="password"], input[type="email"], select {
+    .match {
+      background-color: white;
       padding: 10px;
-      margin: 5px;
-      border-radius: 5px;
-      border: none;
+      margin-bottom: 10px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .inputs {
+      display: flex;
+      gap: 5px;
+    }
+    input[type='number'] {
+      width: 40px;
+      padding: 5px;
+      font-size: 16px;
     }
     button {
-      padding: 10px 20px;
-      margin: 10px;
-      border: none;
-      border-radius: 5px;
-      background-color: #e50914;
-      color: white;
+      padding: 5px 10px;
+      font-size: 14px;
       cursor: pointer;
     }
-    .match {
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      gap: 10px;
-      margin: 10px 0;
-    }
-    .hidden {
-      display: none;
-    }
     #results {
-      margin-top: 20px;
-      text-align: left;
+      margin-top: 30px;
+      background: #fff;
+      padding: 10px;
+      border-radius: 8px;
+    }
+    .result-entry {
+      font-size: 14px;
+      margin-bottom: 5px;
     }
   </style>
 </head>
 <body>
-  <div id="register">
-    <h2>Rejestracja</h2>
-    <input type="text" id="regNick" placeholder="Nick" /><br />
-    <select id="regPlatform">
-      <option value="YouTube">YouTube</option>
-      <option value="Instagram">Instagram</option>
-      <option value="TikTok">TikTok</option>
-    </select><br />
-    <input type="email" id="regEmail" placeholder="Email" /><br />
-    <input type="password" id="regPassword" placeholder="Hasło" /><br />
-    <button onclick="register()">Zarejestruj</button>
-    <p>Masz już konto? <a href="#" onclick="showLogin()">Zaloguj się</a></p>
-  </div>  <div id="login" class="hidden">
-    <h2>Logowanie</h2>
-    <input type="email" id="logEmail" placeholder="Email" /><br />
-    <input type="password" id="logPassword" placeholder="Hasło" /><br />
-    <button onclick="login()">Zaloguj</button>
-    <p>Nie masz konta? <a href="#" onclick="showRegister()">Zarejestruj się</a></p>
-  </div>  <div id="main" class="hidden">
-    <h1>Football Fans - Typer Ekstraklasy</h1>
-    <div id="matches"></div>
-    <div id="results"></div>
-  </div>  <script>
+  <h1>FF-Typer - Kolejka 1</h1>
+  <div id="matches"></div>
+  <div id="results"></div>  <script>
+    const currentUser = "Mega_Bubek";
+
     const matches = [
-      ["Legia Warszawa", "Lech Poznań"],
-      ["Wisła Kraków", "Górnik Zabrze"],
-      ["Cracovia", "Radomiak Radom"],
-      ["Zagłębie Lubin", "Korona Kielce"],
-      ["Widzew Łódź", "Jagiellonia Białystok"],
-      ["Pogoń Szczecin", "Lechia Gdańsk"],
-      ["Piast Gliwice", "Stal Mielec"],
-      ["Raków Częstochowa", "ŁKS Łódź"],
-      ["Polonia Warszawa", "Arka Gdynia"]
+      "Legia Warszawa vs Lech Poznań",
+      "Pogoń Szczecin vs Raków Częstochowa",
+      "Wisła Kraków vs Jagiellonia Białystok",
+      "Cracovia vs Górnik Zabrze",
+      "Zagłębie Lubin vs Widzew Łódź",
+      "Korona Kielce vs Piast Gliwice",
+      "Stal Mielec vs Radomiak Radom",
+      "Lechia Gdańsk vs ŁKS Łódź",
+      "Polonia Warszawa vs Motor Lublin"
     ];
 
-    let users = JSON.parse(localStorage.getItem("users") || "[]");
-    let currentUser = JSON.parse(localStorage.getItem("currentUser") || "null");
-    const results = {};
-
-    function saveUsers() {
-      localStorage.setItem("users", JSON.stringify(users));
-    }
-
-    function showLogin() {
-      document.getElementById("register").classList.add("hidden");
-      document.getElementById("login").classList.remove("hidden");
-    }
-
-    function showRegister() {
-      document.getElementById("login").classList.add("hidden");
-      document.getElementById("register").classList.remove("hidden");
-    }
-
-    function register() {
-      const nick = document.getElementById("regNick").value;
-      const platform = document.getElementById("regPlatform").value;
-      const email = document.getElementById("regEmail").value;
-      const password = document.getElementById("regPassword").value;
-      if (!nick || !email || !password) return alert("Wypełnij wszystkie pola");
-      users.push({ nick, platform, email, password });
-      saveUsers();
-      localStorage.setItem("currentUser", JSON.stringify({ nick, platform, email }));
-      showMain();
-    }
-
-    function login() {
-      const email = document.getElementById("logEmail").value;
-      const password = document.getElementById("logPassword").value;
-      const user = users.find(u => u.email === email && u.password === password);
-      if (!user) return alert("Niepoprawny login lub hasło");
-      localStorage.setItem("currentUser", JSON.stringify(user));
-      showMain();
-    }
-
-    function showMain() {
-      document.getElementById("register").classList.add("hidden");
-      document.getElementById("login").classList.add("hidden");
-      document.getElementById("main").classList.remove("hidden");
-      renderMatches();
-    }
+    const savedResults = JSON.parse(localStorage.getItem("userVotes")) || [];
 
     function renderMatches() {
       const container = document.getElementById("matches");
       container.innerHTML = "";
-      matches.forEach(([home, away], index) => {
-        container.innerHTML += `
-          <div class="match">
-            <span>${home}</span>
-            <input type="number" id="home-${index}" min="0" style="width: 40px" />
-            <input type="number" id="away-${index}" min="0" style="width: 40px" />
-            <span>${away}</span>
-            <button onclick="submitResult(${index})">Zatwierdź</button>
+      matches.forEach((match, index) => {
+        const div = document.createElement("div");
+        div.className = "match";
+        div.innerHTML = `
+          <span>${match}</span>
+          <div class="inputs">
+            <input type="number" min="0" id="g1-${index}" />
+            <input type="number" min="0" id="g2-${index}" />
+            <button onclick="saveResult(${index})">Zatwierdź</button>
           </div>
         `;
+        container.appendChild(div);
       });
     }
 
-    function submitResult(index) {
-      const home = document.getElementById(`home-${index}`).value;
-      const away = document.getElementById(`away-${index}`).value;
-      const match = `${matches[index][0]} vs ${matches[index][1]}`;
-      const nick = JSON.parse(localStorage.getItem("currentUser")).nick;
-      if (!results[match]) results[match] = [];
-      results[match].push({ nick, result: `${home}-${away}` });
-      renderSubmitted();
+    function saveResult(index) {
+      const g1 = document.getElementById(`g1-${index}`).value;
+      const g2 = document.getElementById(`g2-${index}`).value;
+      if (g1 === "" || g2 === "") return;
+
+      const match = matches[index];
+      const now = new Date();
+      const timestamp = now.toISOString().replace("T", " ").slice(0, 16);
+
+      const result = {
+        user: currentUser,
+        match,
+        score: `${g1}-${g2}`,
+        time: timestamp
+      };
+
+      savedResults.push(result);
+      localStorage.setItem("userVotes", JSON.stringify(savedResults));
+      renderResults();
     }
 
-    function renderSubmitted() {
-      const out = document.getElementById("results");
-      out.innerHTML = "<h3>Oddane głosy:</h3>";
-      for (const match in results) {
-        out.innerHTML += `<strong>${match}</strong><ul>`;
-        results[match].forEach(entry => {
-          out.innerHTML += `<li>${entry.nick}: ${entry.result}</li>`;
+    function renderResults() {
+      const container = document.getElementById("results");
+      container.innerHTML = `<h3>Twoje typy:</h3>`;
+      savedResults
+        .filter(r => r.user === currentUser)
+        .forEach(r => {
+          const div = document.createElement("div");
+          div.className = "result-entry";
+          div.textContent = `🕒 ${r.time} | ⚽ ${r.user}: ${r.score} (${r.match})`;
+          container.appendChild(div);
         });
-        out.innerHTML += "</ul>";
-      }
     }
 
-    if (currentUser) showMain();
+    renderMatches();
+    renderResults();
   </script></body>
 </html>
