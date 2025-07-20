@@ -1,112 +1,101 @@
 <!DOCTYPE html><html lang="pl">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>FF-Typer</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Football Fans Typer</title>
   <style>
     body {
-      margin: 0;
-      font-family: Arial, sans-serif;
-      background-color: #0d1b2a;
-      color: #ffffff;
-    }
-    header {
-      background-color: #1b263b;
-      padding: 10px;
+      font-family: sans-serif;
+      background: #111;
+      color: #fff;
       text-align: center;
-      font-size: 24px;
-      font-weight: bold;
+      margin: 0;
+      padding: 2rem;
     }
-    .auth-container, .typer-container {
-      max-width: 500px;
-      margin: 30px auto;
-      background-color: #415a77;
-      padding: 20px;
-      border-radius: 8px;
+    input, select, button {
+      padding: 0.5rem;
+      margin: 0.5rem;
+      font-size: 1rem;
     }
-    .auth-container input, .typer-container input {
-      width: 100%;
-      padding: 10px;
-      margin: 8px 0;
-      border: none;
-      border-radius: 4px;
-    }
-    button {
-      width: 100%;
-      padding: 10px;
-      margin-top: 10px;
-      background-color: #1b4332;
-      color: #ffffff;
-      border: none;
-      border-radius: 4px;
-      cursor: pointer;
+    .hidden {
+      display: none;
     }
     .match {
       display: flex;
-      justify-content: space-between;
+      justify-content: center;
       align-items: center;
-      margin-bottom: 10px;
+      margin: 1rem 0;
     }
-    .score-input {
-      width: 40px;
+    .match input {
+      width: 3rem;
       text-align: center;
+      font-size: 1.2rem;
     }
   </style>
 </head>
 <body>
-  <header>FF-Typer</header>  <div class="auth-container" id="auth">
-    <h2>Rejestracja</h2>
-    <input type="text" id="username" placeholder="Nick" />
-    <input type="text" id="platform" placeholder="Platforma (YouTube/Instagram/TikTok)" />
-    <input type="email" id="email" placeholder="Email" />
-    <input type="password" id="password" placeholder="Hasło" />
-    <button onclick="register()">Zarejestruj się</button>
-  </div>  <div class="auth-container" id="login" style="display:none;">
-    <h2>Logowanie</h2>
-    <input type="text" id="loginEmail" placeholder="Email" />
-    <input type="password" id="loginPassword" placeholder="Hasło" />
-    <button onclick="login()">Zaloguj się</button>
-  </div>  <div class="typer-container" id="typer" style="display:none;">
-    <h2>Typuj wyniki 1. kolejki Ekstraklasy</h2>
-    <div class="match">Legia - Widzew <input class="score-input" type="number" /> : <input class="score-input" type="number" /></div>
-    <div class="match">Lech - Górnik <input class="score-input" type="number" /> : <input class="score-input" type="number" /></div>
-    <div class="match">Jagiellonia - Korona <input class="score-input" type="number" /> : <input class="score-input" type="number" /></div>
-    <div class="match">Zagłębie - Cracovia <input class="score-input" type="number" /> : <input class="score-input" type="number" /></div>
-    <div class="match">Raków - Radomiak <input class="score-input" type="number" /> : <input class="score-input" type="number" /></div>
-    <div class="match">Pogoń - Piast <input class="score-input" type="number" /> : <input class="score-input" type="number" /></div>
-    <div class="match">Wisła K. - Motor <input class="score-input" type="number" /> : <input class="score-input" type="number" /></div>
-    <div class="match">ŁKS - Stal M. <input class="score-input" type="number" /> : <input class="score-input" type="number" /></div>
+  <h1>Football Fans Typer</h1>  <div id="auth-section">
+    <div id="register">
+      <h2>Rejestracja</h2>
+      <input id="regNick" placeholder="Nick">
+      <select id="regPlatform">
+        <option value="YouTube">YouTube</option>
+        <option value="Instagram">Instagram</option>
+        <option value="TikTok">TikTok</option>
+      </select><br>
+      <input id="regEmail" type="email" placeholder="Email"><br>
+      <input id="regPass" type="password" placeholder="Hasło">
+      <button onclick="register()">Zarejestruj</button>
+    </div><div id="login" class="hidden">
+  <h2>Logowanie</h2>
+  <input id="logEmail" type="email" placeholder="Email"><br>
+  <input id="logPass" type="password" placeholder="Hasło">
+  <button onclick="login()">Zaloguj</button>
+</div>
+
+  </div>  <div id="typer" class="hidden">
+    <h2>Typowanie Ekstraklasy</h2>
+    <div class="match">
+      Legia Warszawa <input type="number" min="0"> : <input type="number" min="0"> Lech Poznań
+    </div>
+    <div class="match">
+      Widzew Łódź <input type="number" min="0"> : <input type="number" min="0"> Raków Częstochowa
+    </div>
+    <!-- Dodaj więcej meczów tutaj -->
+    <button>Zatwierdź</button>
   </div>  <script>
+    const user = JSON.parse(localStorage.getItem('ff_user'));
+    if (user) showLogin();
+
     function register() {
-      const user = {
-        username: document.getElementById('username').value,
-        platform: document.getElementById('platform').value,
-        email: document.getElementById('email').value,
-        password: document.getElementById('password').value
-      };
-      localStorage.setItem('ffUser', JSON.stringify(user));
-      document.getElementById('auth').style.display = 'none';
-      document.getElementById('typer').style.display = 'block';
+      const nick = document.getElementById('regNick').value;
+      const platform = document.getElementById('regPlatform').value;
+      const email = document.getElementById('regEmail').value;
+      const pass = document.getElementById('regPass').value;
+      if (!nick || !email || !pass) return alert('Uzupełnij wszystkie dane.');
+      localStorage.setItem('ff_user', JSON.stringify({nick, platform, email, pass}));
+      showTyper();
+    }
+
+    function showLogin() {
+      document.getElementById('register').classList.add('hidden');
+      document.getElementById('login').classList.remove('hidden');
     }
 
     function login() {
-      const storedUser = JSON.parse(localStorage.getItem('ffUser'));
-      const email = document.getElementById('loginEmail').value;
-      const password = document.getElementById('loginPassword').value;
-      if (storedUser && storedUser.email === email && storedUser.password === password) {
-        document.getElementById('login').style.display = 'none';
-        document.getElementById('typer').style.display = 'block';
+      const email = document.getElementById('logEmail').value;
+      const pass = document.getElementById('logPass').value;
+      const saved = JSON.parse(localStorage.getItem('ff_user'));
+      if (saved && saved.email === email && saved.pass === pass) {
+        showTyper();
       } else {
-        alert('Nieprawidłowy email lub hasło');
+        alert('Błędne dane logowania.');
       }
     }
 
-    window.onload = function () {
-      const storedUser = JSON.parse(localStorage.getItem('ffUser'));
-      if (storedUser) {
-        document.getElementById('auth').style.display = 'none';
-        document.getElementById('login').style.display = 'block';
-      }
-    };
+    function showTyper() {
+      document.getElementById('auth-section').classList.add('hidden');
+      document.getElementById('typer').classList.remove('hidden');
+    }
   </script></body>
 </html>
