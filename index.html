@@ -1,5 +1,4 @@
-<!DOCTYPE html>
-<html lang="pl">
+<!DOCTYPE html><html lang="pl">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
@@ -16,7 +15,7 @@
       padding: 20px;
     }
     .container {
-      max-width: 500px;
+      max-width: 600px;
       width: 100%;
     }
     input, select, button {
@@ -39,6 +38,23 @@
       margin-top: 20px;
       background: #e63946;
     }
+    .match-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: #1b263b;
+      margin: 5px 0;
+      padding: 10px;
+      border-radius: 8px;
+    }
+    .score-inputs {
+      display: flex;
+      gap: 10px;
+    }
+    .score-inputs input {
+      width: 50px;
+      text-align: center;
+    }
   </style>
 </head>
 <body>
@@ -55,16 +71,29 @@
       <input type="email" id="email" placeholder="Email" required />
       <input type="password" id="password" placeholder="Hasło" required />
       <button onclick="registerUser()">Zarejestruj się</button>
+    </div><div id="mainPage" class="hidden">
+  <h2>Witaj w FF-Typer!</h2>
+  <div id="matchList">
+    <div class="match-row">
+      <span>Legia - Lech</span>
+      <div class="score-inputs">
+        <input type="number" inputmode="numeric" min="0" max="99" />
+        <input type="number" inputmode="numeric" min="0" max="99" />
+      </div>
     </div>
-
-    <div id="mainPage" class="hidden">
-      <h2>Witaj w FF-Typer!</h2>
-      <p>Tu będzie strona główna z typerem, terminarzem itd.</p>
-      <button class="logout" onclick="logout()">Wyloguj</button>
+    <div class="match-row">
+      <span>Jagiellonia - Górnik</span>
+      <div class="score-inputs">
+        <input type="number" inputmode="numeric" min="0" max="99" />
+        <input type="number" inputmode="numeric" min="0" max="99" />
+      </div>
     </div>
+    <!-- Dodaj kolejne mecze tutaj -->
   </div>
+  <button class="logout" onclick="logout()">Wyloguj</button>
+</div>
 
-  <script>
+  </div>  <script>
     const registerDiv = document.getElementById("register");
     const mainPage = document.getElementById("mainPage");
 
@@ -95,11 +124,9 @@
       location.reload();
     }
 
-    // Automatyczne logowanie
     const savedUser = localStorage.getItem("userFF");
     if (savedUser) {
       showMainPage();
     }
-  </script>
-</body>
+  </script></body>
 </html>
