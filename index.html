@@ -1,233 +1,214 @@
-<!DOCTYPE html><html lang="pl">
+    <!DOCTYPE html><html lang="pl">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>FF-Typer</title>
+  <title>Football Fans Typer</title>
   <style>
     body {
-      background-color: #111;
-      color: #fff;
-      font-family: Arial, sans-serif;
       margin: 0;
-      padding: 0;
+      font-family: Arial, sans-serif;
+      background-color: #111;
+      color: white;
     }
     header {
       background-color: #b30000;
-      padding: 1rem;
+      padding: 10px;
       text-align: center;
-      font-size: 1.5rem;
+      font-size: 24px;
     }
-    .container {
-      max-width: 600px;
-      margin: 2rem auto;
-      padding: 1rem;
-      background-color: #1c1c1c;
-      border-radius: 10px;
+    .screen {
+      display: none;
+      padding: 20px;
+    }
+    .active {
+      display: block;
     }
     .match {
+      margin: 10px 0;
+      padding: 10px;
+      background: #222;
+      border-radius: 8px;
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin: 1rem 0;
-      border-bottom: 1px solid #444;
-      padding-bottom: 1rem;
     }
-    .team {
+    .match span {
       flex: 1;
       text-align: center;
     }
-    input[type="number"] {
-      width: 40px;
-      padding: 0.3rem;
+    input[type='number'] {
+      width: 50px;
+      padding: 5px;
+      margin: 0 5px;
       background-color: #000;
-      color: #fff;
+      color: white;
       border: 1px solid #b30000;
+      border-radius: 4px;
       text-align: center;
     }
     button {
       background-color: #b30000;
-      color: #fff;
+      color: white;
       border: none;
-      padding: 0.5rem 1rem;
-      margin-top: 0.5rem;
+      padding: 10px;
+      margin: 5px;
       cursor: pointer;
       border-radius: 5px;
     }
-    .nav-buttons {
-      text-align: center;
-      margin: 1rem 0;
+    button:hover {
+      background-color: #ff0000;
     }
-    .saved-picks {
-      margin-top: 2rem;
+    .admin-log {
+      margin-top: 30px;
+      background-color: #333;
+      padding: 15px;
+      border-radius: 10px;
     }
-    .hidden {
-      display: none;
+    .admin-log h3 {
+      margin-top: 0;
+    }
+    .auth-form {
+      max-width: 300px;
+      margin: 30px auto;
+      padding: 20px;
+      background: #222;
+      border-radius: 10px;
+    }
+    .auth-form input, .auth-form select {
+      width: 100%;
+      padding: 10px;
+      margin: 5px 0;
+      border-radius: 5px;
+      border: 1px solid #b30000;
+      background-color: #000;
+      color: white;
     }
   </style>
 </head>
 <body>
-  <header>FF-Typer</header>
-  <div class="container">
-    <div id="auth-section">
+  <header>Football Fans Typer</header>  <div class="screen active" id="register-screen">
+    <form class="auth-form" onsubmit="register(event)">
       <h2>Zarejestruj się</h2>
-      <input id="nick" placeholder="Nick" /><br />
-      <input id="email" type="email" placeholder="Email" /><br />
-      <input id="password" type="password" placeholder="Hasło" /><br />
-      <button onclick="register()">Zarejestruj</button><div style="margin-top: 1rem;">
-    Masz konto? <a href="#" onclick="toggleLogin(true)">Zaloguj się</a>
-  </div>
-</div>
-
-<div id="login-section" class="hidden">
-  <h2>Zaloguj się</h2>
-  <input id="login-email" type="email" placeholder="Email" /><br />
-  <input id="login-password" type="password" placeholder="Hasło" /><br />
-  <button onclick="login()">Zaloguj</button>
-</div>
-
-<div id="main-section" class="hidden">
-  <div class="nav-buttons">
-    <button onclick="prevRound()">&larr; Poprzednia kolejka</button>
-    <span id="round-title">Kolejka 1</span>
-    <button onclick="nextRound()">Następna kolejka &rarr;</button>
-  </div>
-  <div id="matches"></div>
-
-  <div class="saved-picks">
-    <h3>Twoje typy:</h3>
-    <ul id="picks"></ul>
-  </div>
-</div>
-
+      <input type="text" id="reg-nick" placeholder="Nick" required />
+      <select id="reg-platform" required>
+        <option value="YouTube">YouTube</option>
+        <option value="Instagram">Instagram</option>
+        <option value="TikTok">TikTok</option>
+      </select>
+      <input type="email" id="reg-email" placeholder="Email" required />
+      <input type="password" id="reg-pass" placeholder="Hasło" required />
+      <button type="submit">Zarejestruj</button>
+      <p><a href="#" onclick="showScreen('login-screen')">Masz konto? Zaloguj się</a></p>
+    </form>
+  </div>  <div class="screen" id="login-screen">
+    <form class="auth-form" onsubmit="login(event)">
+      <h2>Zaloguj się</h2>
+      <input type="text" id="login-email" placeholder="Email" required />
+      <input type="password" id="login-pass" placeholder="Hasło" required />
+      <button type="submit">Zaloguj</button>
+    </form>
+  </div>  <div class="screen" id="main-screen">
+    <div id="match-list"></div>
+    <div class="admin-log">
+      <h3>Typy użytkowników</h3>
+      <ul id="admin-logs"></ul>
+    </div>
   </div>  <script>
-    const totalRounds = 34;
-    let currentRound = 1;
-    let user = null;
+    const matches = [
+      ["Legia Warszawa", "Lech Poznań"],
+      ["Raków Częstochowa", "Górnik Zabrze"],
+      ["Zagłębie Lubin", "Korona Kielce"],
+      ["Piast Gliwice", "Warta Poznań"],
+      ["Cracovia", "Pogoń Szczecin"],
+      ["Jagiellonia Białystok", "Stal Mielec"],
+      ["Wisła Kraków", "ŁKS Łódź"],
+      ["Radomiak Radom", "Motor Lublin"],
+      ["Arka Gdynia", "Lechia Gdańsk"]
+    ];
 
-    const rounds = {
-      1: [
-        ['Legia', 'Lech'], ['Cracovia', 'Jagiellonia'], ['Pogoń', 'Widzew'],
-        ['Górnik', 'Piast'], ['Zagłębie', 'Korona'], ['Stal', 'Radomiak'],
-        ['Raków', 'Wisła Płock'], ['ŁKS', 'Motor'], ['Polonia', 'Lechia']
-      ],
-      2: [
-        ['Lech', 'Cracovia'], ['Legia', 'Pogoń'], ['Widzew', 'Zagłębie'],
-        ['Jagiellonia', 'Stal'], ['Piast', 'Raków'], ['Korona', 'ŁKS'],
-        ['Wisła Płock', 'Górnik'], ['Motor', 'Polonia'], ['Radomiak', 'Lechia']
-      ] // dodaj więcej do 34 kolejki później
-    };
-
-    function saveUser(userData) {
-      localStorage.setItem('user', JSON.stringify(userData));
+    let currentUser = JSON.parse(localStorage.getItem("currentUser"));
+    if (currentUser) {
+      showScreen("main-screen");
+      loadMatches();
     }
 
-    function loadUser() {
-      const saved = localStorage.getItem('user');
-      if (saved) return JSON.parse(saved);
-      return null;
+    function showScreen(screenId) {
+      document.querySelectorAll(".screen").forEach(s => s.classList.remove("active"));
+      document.getElementById(screenId).classList.add("active");
     }
 
-    function register() {
-      const nick = document.getElementById('nick').value;
-      const email = document.getElementById('email').value;
-      const password = document.getElementById('password').value;
-      const data = { nick, email, password };
-      saveUser(data);
-      user = data;
-      showMain();
+    function register(e) {
+      e.preventDefault();
+      const nick = document.getElementById("reg-nick").value;
+      const platform = document.getElementById("reg-platform").value;
+      const email = document.getElementById("reg-email").value;
+      const pass = document.getElementById("reg-pass").value;
+      const users = JSON.parse(localStorage.getItem("users") || "[]");
+      users.push({ nick, platform, email, pass });
+      localStorage.setItem("users", JSON.stringify(users));
+      localStorage.setItem("currentUser", JSON.stringify({ nick, email }));
+      showScreen("main-screen");
+      loadMatches();
     }
 
-    function login() {
-      const email = document.getElementById('login-email').value;
-      const password = document.getElementById('login-password').value;
-      const saved = loadUser();
-      if (saved && saved.email === email && saved.password === password) {
-        user = saved;
-        showMain();
-      } else {
-        alert('Nieprawidłowy email lub hasło.');
-      }
-    }
-
-    function toggleLogin(showLogin) {
-      document.getElementById('auth-section').classList.toggle('hidden', showLogin);
-      document.getElementById('login-section').classList.toggle('hidden', !showLogin);
-    }
-
-    function showMain() {
-      document.getElementById('auth-section').classList.add('hidden');
-      document.getElementById('login-section').classList.add('hidden');
-      document.getElementById('main-section').classList.remove('hidden');
-      renderMatches();
-      showSavedPicks();
-    }
-
-    function renderMatches() {
-      const matchesDiv = document.getElementById('matches');
-      matchesDiv.innerHTML = '';
-      document.getElementById('round-title').innerText = `Kolejka ${currentRound}`;
-      (rounds[currentRound] || []).forEach((match, index) => {
-        const [home, away] = match;
-        const div = document.createElement('div');
-        div.className = 'match';
-        div.innerHTML = `
-          <div class="team">${home}</div>
-          <input type="number" id="g${index}_h" min="0" />
-          <input type="number" id="g${index}_a" min="0" />
-          <div class="team">${away}</div>
-          <button onclick="submitPick(${index}, '${home}', '${away}')">Zatwierdź</button>
-        `;
-        matchesDiv.appendChild(div);
-      });
-    }
-
-    function submitPick(index, home, away) {
-      const homeGoals = document.getElementById(`g${index}_h`).value;
-      const awayGoals = document.getElementById(`g${index}_a`).value;
-      const time = new Date().toLocaleString();
-      const pick = {
-        round: currentRound,
-        match: `${home} vs ${away}`,
-        result: `${homeGoals}-${awayGoals}`,
-        user: user.nick,
-        time: time
-      };
-      const saved = JSON.parse(localStorage.getItem('picks') || '[]');
-      saved.push(pick);
-      localStorage.setItem('picks', JSON.stringify(saved));
-      showSavedPicks();
-    }
-
-    function showSavedPicks() {
-      const list = document.getElementById('picks');
-      list.innerHTML = '';
-      const saved = JSON.parse(localStorage.getItem('picks') || '[]');
-      saved.filter(p => p.user === user.nick).forEach(pick => {
-        const li = document.createElement('li');
-        li.innerText = `${pick.time}: [${pick.match}] ${pick.result}`;
-        list.appendChild(li);
-      });
-    }
-
-    function nextRound() {
-      if (currentRound < totalRounds) {
-        currentRound++;
-        renderMatches();
-      }
-    }
-
-    function prevRound() {
-      if (currentRound > 1) {
-        currentRound--;
-        renderMatches();
-      }
-    }
-
-    window.onload = () => {
-      user = loadUser();
+    function login(e) {
+      e.preventDefault();
+      const email = document.getElementById("login-email").value;
+      const pass = document.getElementById("login-pass").value;
+      const users = JSON.parse(localStorage.getItem("users") || "[]");
+      const user = users.find(u => u.email === email && u.pass === pass);
       if (user) {
-        showMain();
+        localStorage.setItem("currentUser", JSON.stringify({ nick: user.nick, email }));
+        showScreen("main-screen");
+        loadMatches();
+      } else {
+        alert("Błędne dane logowania");
       }
-    };
+    }
+
+    function loadMatches() {
+      const container = document.getElementById("match-list");
+      const logs = document.getElementById("admin-logs");
+      container.innerHTML = "";
+      logs.innerHTML = "";
+      matches.forEach((match, i) => {
+        const saved = JSON.parse(localStorage.getItem("results") || "[]");
+        const div = document.createElement("div");
+        div.className = "match";
+        div.innerHTML = `
+          <span>${match[0]}</span>
+          <input type="number" min="0" id="home-${i}" placeholder="0" inputmode="numeric" />
+          <span>-</span>
+          <input type="number" min="0" id="away-${i}" placeholder="0" inputmode="numeric" />
+          <span>${match[1]}</span>
+          <button onclick="submitResult(${i})">Zatwierdź</button>
+        `;
+        container.appendChild(div);
+      });
+
+      const allResults = JSON.parse(localStorage.getItem("results") || "[]");
+      allResults.forEach(r => {
+        const li = document.createElement("li");
+        li.textContent = `${r.nick} obstawił ${matches[r.match][0]} ${r.home}:${r.away} ${matches[r.match][1]} o ${r.time}`;
+        logs.appendChild(li);
+      });
+    }
+
+    function submitResult(i) {
+      const home = document.getElementById(`home-${i}`).value;
+      const away = document.getElementById(`away-${i}`).value;
+      const currentUser = JSON.parse(localStorage.getItem("currentUser"));
+      const result = {
+        nick: currentUser.nick,
+        match: i,
+        home,
+        away,
+        time: new Date().toLocaleString()
+      };
+      const results = JSON.parse(localStorage.getItem("results") || "[]");
+      results.push(result);
+      localStorage.setItem("results", JSON.stringify(results));
+      loadMatches();
+    }
   </script></body>
-</html>
+    </html>
