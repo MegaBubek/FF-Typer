@@ -1,170 +1,142 @@
-<!DOCTYPE html><html lang="pl">
+<!DOCTYPE html>
+<html lang="pl">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>FF-Typer</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <style>
     body {
       font-family: Arial, sans-serif;
       background-color: #101820;
-      color: #fff;
+      color: white;
       margin: 0;
       padding: 0;
     }
-    header {
-      background-color: #0e2a47;
-      padding: 20px;
-      text-align: center;
-      font-size: 24px;
-    }
+
     .container {
+      max-width: 400px;
+      margin: 40px auto;
       padding: 20px;
+      background-color: #1f2a36;
+      border-radius: 10px;
     }
-    .form-group {
-      margin-bottom: 15px;
+
+    h2 {
+      text-align: center;
+      color: #4caf50;
     }
-    input[type="text"], input[type="password"], input[type="email"] {
-      padding: 10px;
+
+    input, select, button {
       width: 100%;
-      box-sizing: border-box;
-    }
-    button {
-      background-color: #28a745;
-      color: white;
+      padding: 10px;
+      margin-top: 10px;
       border: none;
-      padding: 10px 20px;
-      cursor: pointer;
+      border-radius: 5px;
+      font-size: 16px;
     }
-    .match-row {
+
+    input[type="password"], input[type="email"] {
+      background-color: #2e3b4e;
+      color: white;
+    }
+
+    .typer-section {
+      display: none;
+      padding: 20px;
+      max-width: 500px;
+      margin: auto;
+    }
+
+    .match {
       display: flex;
       justify-content: space-between;
-      align-items: center;
-      margin-bottom: 10px;
-      background-color: #1a1a1a;
+      margin: 10px 0;
+      background: #2e3b4e;
       padding: 10px;
       border-radius: 5px;
     }
+
     .score-input {
+      display: flex;
+      gap: 10px;
+    }
+
+    .score-input input {
       width: 40px;
       text-align: center;
-      font-size: 16px;
     }
-    .score-section {
-      display: flex;
-      align-items: center;
-      gap: 10px;
+
+    button {
+      background-color: #4caf50;
+      color: white;
+      cursor: pointer;
     }
   </style>
 </head>
 <body>
-  <header>FF-Typer</header>
-  <div class="container" id="main"></div>  <script>
-    const users = JSON.parse(localStorage.getItem("users")) || [];
-    const loggedUser = localStorage.getItem("loggedUser");
 
-    const main = document.getElementById("main");
+<div id="register-section" class="container">
+  <h2>Rejestracja</h2>
+  <input type="text" id="nick" placeholder="Nick">
+  <select id="platform">
+    <option value="YouTube">YouTube</option>
+    <option value="Instagram">Instagram</option>
+    <option value="TikTok">TikTok</option>
+  </select>
+  <input type="password" id="password" placeholder="Hasło">
+  <input type="email" id="email" placeholder="Email">
+  <button onclick="register()">Zarejestruj</button>
+</div>
 
-    const showTyper = () => {
-      main.innerHTML = `
-        <h2>Witaj w FF-Typer, ${loggedUser}!</h2>
-        <div id="matches"></div>
-      `;
-      loadMatches();
-    };
+<div id="typer-section" class="typer-section">
+  <h2>FF-Typer – Kolejka 1</h2>
+  <div class="match">
+    <span>Legia vs Lech</span>
+    <div class="score-input">
+      <input type="number" inputmode="numeric" min="0" placeholder="0">
+      <input type="number" inputmode="numeric" min="0" placeholder="0">
+    </div>
+  </div>
+  <div class="match">
+    <span>Cracovia vs Jagiellonia</span>
+    <div class="score-input">
+      <input type="number" inputmode="numeric" min="0" placeholder="0">
+      <input type="number" inputmode="numeric" min="0" placeholder="0">
+    </div>
+  </div>
+</div>
 
-    const showLogin = () => {
-      main.innerHTML = `
-        <h2>Logowanie</h2>
-        <div class="form-group">
-          <input type="text" id="loginNick" placeholder="Nick lub email">
-        </div>
-        <div class="form-group">
-          <input type="password" id="loginPassword" placeholder="Hasło">
-        </div>
-        <button onclick="loginUser()">Zaloguj się</button>
-      `;
-    };
+<script>
+  function register() {
+    const nick = document.getElementById('nick').value;
+    const platform = document.getElementById('platform').value;
+    const password = document.getElementById('password').value;
+    const email = document.getElementById('email').value;
 
-    const showRegister = () => {
-      main.innerHTML = `
-        <h2>Rejestracja</h2>
-        <div class="form-group">
-          <input type="text" id="nick" placeholder="Nick">
-        </div>
-        <div class="form-group">
-          <input type="text" id="platform" placeholder="YouTube / Instagram / TikTok">
-        </div>
-        <div class="form-group">
-          <input type="email" id="email" placeholder="Email">
-        </div>
-        <div class="form-group">
-          <input type="password" id="password" placeholder="Hasło">
-        </div>
-        <button onclick="registerUser()">Zarejestruj się</button>
-      `;
-    };
-
-    const registerUser = () => {
-      const nick = document.getElementById("nick").value;
-      const platform = document.getElementById("platform").value;
-      const email = document.getElementById("email").value;
-      const password = document.getElementById("password").value;
-
-      if (users.find(u => u.nick === nick || u.email === email)) {
-        alert("Użytkownik już istnieje. Zaloguj się.");
-        showLogin();
-        return;
-      }
-
-      users.push({ nick, platform, email, password });
-      localStorage.setItem("users", JSON.stringify(users));
-      localStorage.setItem("loggedUser", nick);
+    if (nick && platform && password && email) {
+      const user = {
+        nick,
+        platform,
+        password,
+        email
+      };
+      localStorage.setItem('userFFTyper', JSON.stringify(user));
       showTyper();
-    };
-
-    const loginUser = () => {
-      const loginNick = document.getElementById("loginNick").value;
-      const loginPassword = document.getElementById("loginPassword").value;
-      const found = users.find(u => (u.nick === loginNick || u.email === loginNick) && u.password === loginPassword);
-      if (found) {
-        localStorage.setItem("loggedUser", found.nick);
-        showTyper();
-      } else {
-        alert("Niepoprawne dane logowania.");
-      }
-    };
-
-    const loadMatches = () => {
-      const matches = [
-        ["Legia", "Lech"],
-        ["Jagiellonia", "Cracovia"],
-        ["Widzew", "Górnik"],
-        ["Piast", "Zagłębie"],
-        ["Korona", "ŁKS"],
-        ["Radomiak", "Pogoń"],
-        ["Wisła Płock", "Stal Mielec"],
-        ["Polonia", "GKS Katowice"]
-      ];
-      const container = document.getElementById("matches");
-      matches.forEach(([home, away], i) => {
-        const row = document.createElement("div");
-        row.className = "match-row";
-        row.innerHTML = `
-          <span>${home} vs ${away}</span>
-          <div class="score-section">
-            <input type="number" class="score-input" placeholder="0" min="0" max="99">
-            <input type="number" class="score-input" placeholder="0" min="0" max="99">
-            <button>Zatwierdź</button>
-          </div>
-        `;
-        container.appendChild(row);
-      });
-    };
-
-    if (loggedUser) {
-      showTyper();
-    } else {
-      showRegister();
     }
-  </script></body>
+  }
+
+  function showTyper() {
+    document.getElementById('register-section').style.display = 'none';
+    document.getElementById('typer-section').style.display = 'block';
+  }
+
+  window.onload = function () {
+    const savedUser = localStorage.getItem('userFFTyper');
+    if (savedUser) {
+      showTyper();
+    }
+  };
+</script>
+
+</body>
 </html>
