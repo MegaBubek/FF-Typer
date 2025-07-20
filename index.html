@@ -1,97 +1,69 @@
-<!DOCTYPE html>
-<html lang="pl">
+<!DOCTYPE html><html lang="pl">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>FF-Typer</title>
+  <title>FF‑Typer – Ekstraklasa</title>
   <style>
-    body {
-      margin: 0;
-      font-family: 'Segoe UI', sans-serif;
-      background-color: #0A1E3F; /* granat */
-      color: #D0E6FF; /* jasny niebieski */
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      min-height: 100vh;
-    }
-
-    header {
-      background-color: #081530;
-      width: 100%;
-      padding: 20px 0;
-      text-align: center;
-      box-shadow: 0 0 10px #00000050;
-    }
-
-    header h1 {
-      margin: 0;
-      font-size: 2.5em;
-      color: #4FB0FF;
-    }
-
-    main {
-      padding: 20px;
-      max-width: 600px;
-      width: 100%;
-    }
-
-    .match-box {
-      background-color: #12264d;
-      border-radius: 10px;
-      padding: 15px;
-      margin-bottom: 15px;
-      box-shadow: 0 2px 5px #00000040;
-    }
-
-    .match-box h2 {
-      margin-top: 0;
-      color: #ffffff;
-    }
-
-    input[type="text"] {
-      width: 100%;
-      padding: 10px;
-      border-radius: 8px;
-      border: none;
-      font-size: 1em;
-      margin-top: 10px;
-      background-color: #1e3a70;
-      color: white;
-    }
-
-    footer {
-      margin-top: auto;
-      padding: 15px;
-      background-color: #081530;
-      color: #ffffff70;
-      font-size: 0.9em;
-      width: 100%;
-      text-align: center;
-    }
+    body { font-family:sans-serif; margin:0; padding:0; background:#0A1E3F; color:#D0E6FF; background:#081530; padding:15px; text-align:center; }
+    header h1 { margin:0; font-size:2em; color:#4FB0FF; }
+    nav { display:flex; justify-content:center; align-items:center; padding:10px; }
+    nav button { background:#12264d; color:#D0E6FF; border:none; padding:10px 15px; margin:0 5px; border-radius:5px; cursor:pointer; }
+    nav button:disabled { opacity:0.5; cursor:default; }
+    main { padding:20px; max-width:600px; margin:auto; }
+    .match { background:#12264d; margin-bottom:10px; padding:10px; border-radius:8px; }
+    .match span { display:block; margin-bottom:5px; font-weight:bold; }
+    .match input { width:60px; padding:5px; border:none; border-radius:5px; background:#1E3A70; color:#fff; }
+    footer { text-align:center; padding:10px; background:#081530; font-size:0.8em; }
   </style>
 </head>
 <body>
-  <header>
-    <h1>FF-Typer</h1>
-  </header>
+  <header><h1>FF‑Typer – Ekstraklasa</h1></header>
+  <nav>
+    <button id="prev">← Poprzednia</button>
+    <span id="roundLabel">Kolejka 1</span>
+    <button id="next">Następna →</button>
+  </nav>
+  <main id="main"></main>
+  <footer>© 2025 Football Fans – Mega_Bubek</footer>  <script>
+    const schedule = {
+      1: [
+        "Wisła Płock – Korona Kielce",
+        "Legia Warszawa – Piast Gliwice",
+        "Motor Lublin – Arka Gdynia",
+        "Widzew Łódź – KGHM Zagłębie Lubin",
+        "Górnik Zabrze – Lechia Gdańsk",
+        "Radomiak Radom – Pogoń Szczecin",
+        "GKS Katowice – Raków Częstochowa",
+        "Lech Poznań – Cracovia"
+      ],
+    };
+    let currentRound = 1;
 
-  <main>
-    <div class="match-box">
-      <h2>Legia vs Lech</h2>
-      <input type="text" placeholder="Np. 2-1" />
-    </div>
+    const main = document.getElementById("main");
+    const roundLabel = document.getElementById("roundLabel");
+    const prevBtn = document.getElementById("prev");
+    const nextBtn = document.getElementById("next");
 
-    <div class="match-box">
-      <h2>Ruch vs Górnik</h2>
-      <input type="text" placeholder="Np. 1-1" />
-    </div>
+    function renderRound() {
+      main.innerHTML = "";
+      const matches = schedule[currentRound] || [];
+      matches.forEach((m,i) => {
+        const div = document.createElement("div");
+        div.className = "match";
+        div.innerHTML = `
+          <span>${m}</span>
+          <input id="r${currentRound}m${i}" placeholder="np. 2-1">
+        `;
+        main.appendChild(div);
+      });
+      roundLabel.textContent = `Kolejka ${currentRound}`;
+      prevBtn.disabled = currentRound===1;
+      nextBtn.disabled = !(schedule[currentRound+1]);
+    }
 
-    <!-- Możesz tu dodać więcej meczów -->
-  </main>
+    prevBtn.onclick = () => { currentRound--; renderRound(); };
+    nextBtn.onclick = () => { currentRound++; renderRound(); };
 
-  <footer>
-    © 2025 Football Fans – Mega_Bubek
-  </footer>
-</body>
+    renderRound();
+  </script></body>
 </html>
