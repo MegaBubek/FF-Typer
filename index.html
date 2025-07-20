@@ -1,5 +1,4 @@
-<!DOCTYPE html>
-<html lang="pl">
+<!DOCTYPE html><html lang="pl">
 <head>
   <meta charset="UTF-8">
   <title>FF-Typer</title>
@@ -11,71 +10,72 @@
       color: white;
       margin: 0;
       padding: 0;
-    }
+    }.container {
+  max-width: 400px;
+  margin: 40px auto;
+  padding: 20px;
+  background-color: #1f2a36;
+  border-radius: 10px;
+}
 
-    .container {
-      max-width: 400px;
-      margin: 40px auto;
-      padding: 20px;
-      background-color: #1f2a36;
-      border-radius: 10px;
-    }
+h2 {
+  text-align: center;
+  color: #4caf50;
+}
 
-    h2 {
-      text-align: center;
-      color: #4caf50;
-    }
+input, select, button {
+  width: 100%;
+  padding: 10px;
+  margin-top: 10px;
+  border: none;
+  border-radius: 5px;
+  font-size: 16px;
+}
 
-    input, select, button {
-      width: 100%;
-      padding: 10px;
-      margin-top: 10px;
-      border: none;
-      border-radius: 5px;
-      font-size: 16px;
-    }
+input[type="password"], input[type="email"] {
+  background-color: #2e3b4e;
+  color: white;
+}
 
-    input[type="password"], input[type="email"] {
-      background-color: #2e3b4e;
-      color: white;
-    }
+.typer-section {
+  display: none;
+  padding: 20px;
+  max-width: 500px;
+  margin: auto;
+}
 
-    .typer-section {
-      display: none;
-      padding: 20px;
-      max-width: 500px;
-      margin: auto;
-    }
+.match {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin: 10px 0;
+  background: #2e3b4e;
+  padding: 10px;
+  border-radius: 5px;
+}
 
-    .match {
-      display: flex;
-      justify-content: space-between;
-      margin: 10px 0;
-      background: #2e3b4e;
-      padding: 10px;
-      border-radius: 5px;
-    }
+.score-input {
+  display: flex;
+  gap: 10px;
+}
 
-    .score-input {
-      display: flex;
-      gap: 10px;
-    }
+.score-input input {
+  width: 40px;
+  text-align: center;
+  background-color: #fff;
+  color: #000;
+  border-radius: 5px;
+}
 
-    .score-input input {
-      width: 40px;
-      text-align: center;
-    }
+button {
+  background-color: #4caf50;
+  color: white;
+  cursor: pointer;
+}
 
-    button {
-      background-color: #4caf50;
-      color: white;
-      cursor: pointer;
-    }
   </style>
 </head>
-<body>
-
-<div id="register-section" class="container">
+<body><div id="register-section" class="container">
   <h2>Rejestracja</h2>
   <input type="text" id="nick" placeholder="Nick">
   <select id="platform">
@@ -86,27 +86,33 @@
   <input type="password" id="password" placeholder="Hasło">
   <input type="email" id="email" placeholder="Email">
   <button onclick="register()">Zarejestruj</button>
-</div>
-
-<div id="typer-section" class="typer-section">
-  <h2>FF-Typer – Kolejka 1</h2>
-  <div class="match">
-    <span>Legia vs Lech</span>
+</div><div id="typer-section" class="typer-section">
+  <h2>FF-Typer – Kolejka 1</h2>  <div class="match">
+    <span>Legia Warszawa vs Lech Poznań</span>
     <div class="score-input">
       <input type="number" inputmode="numeric" min="0" placeholder="0">
       <input type="number" inputmode="numeric" min="0" placeholder="0">
     </div>
-  </div>
-  <div class="match">
+  </div>  <div class="match">
     <span>Cracovia vs Jagiellonia</span>
     <div class="score-input">
       <input type="number" inputmode="numeric" min="0" placeholder="0">
       <input type="number" inputmode="numeric" min="0" placeholder="0">
     </div>
+  </div>  <div class="match">
+    <span>Widzew vs Górnik Zabrze</span>
+    <div class="score-input">
+      <input type="number" inputmode="numeric" min="0" placeholder="0">
+      <input type="number" inputmode="numeric" min="0" placeholder="0">
+    </div>
+  </div>  <div class="match">
+    <span>Piast Gliwice vs Raków</span>
+    <div class="score-input">
+      <input type="number" inputmode="numeric" min="0" placeholder="0">
+      <input type="number" inputmode="numeric" min="0" placeholder="0">
+    </div>
   </div>
-</div>
-
-<script>
+</div><script>
   function register() {
     const nick = document.getElementById('nick').value;
     const platform = document.getElementById('platform').value;
@@ -114,12 +120,7 @@
     const email = document.getElementById('email').value;
 
     if (nick && platform && password && email) {
-      const user = {
-        nick,
-        platform,
-        password,
-        email
-      };
+      const user = { nick, platform, password, email };
       localStorage.setItem('userFFTyper', JSON.stringify(user));
       showTyper();
     }
@@ -136,7 +137,5 @@
       showTyper();
     }
   };
-</script>
-
-</body>
+</script></body>
 </html>
