@@ -6,128 +6,124 @@
   <style>
     body {
       font-family: Arial, sans-serif;
-      background-color: #0e1a2b;
-      color: #fff;
+      background-color: #0a0f1c;
+      color: #ffffff;
       margin: 0;
       padding: 0;
+    }
+    header {
+      background-color: #111827;
+      padding: 20px;
+      text-align: center;
+      font-size: 24px;
+    }
+    .match {
+      border-bottom: 1px solid #374151;
+      padding: 15px;
       display: flex;
       flex-direction: column;
       align-items: center;
     }
-    h1 {
-      margin: 20px 0 10px;
-      color: #00ff88;
+    .teams {
+      font-size: 18px;
+      margin-bottom: 10px;
     }
-    .match-day {
-      margin: 10px 0;
+    .inputs {
       display: flex;
-      align-items: center;
-    }
-    .arrow {
-      background-color: #0055ff;
-      border: none;
-      color: white;
-      padding: 5px 10px;
-      cursor: pointer;
-      font-size: 16px;
-      margin: 0 10px;
-      border-radius: 5px;
-    }
-    .matches {
-      max-width: 400px;
-      width: 100%;
-    }
-    .match {
-      background-color: #1c2e4a;
-      padding: 10px;
-      margin: 10px 0;
-      border-radius: 10px;
-      text-align: center;
-    }
-    .score-inputs {
-      display: flex;
-      justify-content: center;
       gap: 10px;
-      margin-top: 10px;
+      justify-content: center;
+      margin-bottom: 10px;
     }
-    input[type="number"] {
+    input[type="text"] {
       width: 40px;
       padding: 5px;
       text-align: center;
       font-size: 16px;
-      border-radius: 5px;
-      border: none;
-      background-color: #e0e0e0;
-      color: #000;
     }
-    button.confirm {
-      margin-top: 10px;
-      background-color: #00cc66;
-      color: white;
-      border: none;
+    button {
       padding: 5px 10px;
-      font-size: 14px;
-      cursor: pointer;
+      font-size: 16px;
+      background-color: #10b981;
+      border: none;
       border-radius: 5px;
+      color: white;
+      cursor: pointer;
+    }
+    .week-selector {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 10px;
+      background-color: #1f2937;
+    }
+    .arrow {
+      font-size: 24px;
+      margin: 0 20px;
+      cursor: pointer;
+    }
+    .week-number {
+      font-size: 18px;
     }
   </style>
 </head>
 <body>
-  <h1>FF-Typer</h1>
-  <div class="match-day">
-    <button class="arrow" onclick="changeMatchday(-1)">&larr;</button>
-    <h2 id="matchday-title">Kolejka 1</h2>
-    <button class="arrow" onclick="changeMatchday(1)">&rarr;</button>
+  <header>FF-Typer</header>
+  <div class="week-selector">
+    <div class="arrow" onclick="previousWeek()">←</div>
+    <div class="week-number" id="week-number">Kolejka 1</div>
+    <div class="arrow" onclick="nextWeek()">→</div>
   </div>
-  <div class="matches" id="matches"></div>  <script>
-    const matchdays = [
+  <div id="matches"></div>  <script>
+    const allFixtures = [
       [
-        { home: "Lech Poznań", away: "Radomiak Radom" },
-        { home: "Korona Kielce", away: "Widzew Łódź" },
-        { home: "Piast Gliwice", away: "Cracovia" },
-        { home: "Legia Warszawa", away: "Zagłębie Lubin" },
-        { home: "Jagiellonia Białystok", away: "Lechia Gdańsk" },
-        { home: "Pogoń Szczecin", away: "Stal Mielec" },
-        { home: "Górnik Zabrze", away: "GKS Katowice" },
-        { home: "Wisła Kraków", away: "ŁKS Łódź" }
+        { home: "Lech Poznań", away: "Pogoń Szczecin" },
+        { home: "Zagłębie Lubin", away: "Radomiak Radom" },
+        { home: "Widzew Łódź", away: "Cracovia" },
+        { home: "Stal Mielec", away: "Korona Kielce" },
+        { home: "Jagiellonia Białystok", away: "Warta Poznań" },
+        { home: "Piast Gliwice", away: "Legia Warszawa" },
+        { home: "Górnik Zabrze", away: "Lechia Gdańsk" },
+        { home: "Wisła Kraków", away: "GKS Katowice" }
       ]
     ];
 
-    let currentMatchday = 0;
+    let currentWeek = 0;
 
     function renderMatches() {
       const matchesDiv = document.getElementById("matches");
       matchesDiv.innerHTML = "";
-      document.getElementById("matchday-title").textContent = `Kolejka ${currentMatchday + 1}`;
-      matchdays[currentMatchday].forEach((match, index) => {
+      document.getElementById("week-number").textContent = `Kolejka ${currentWeek + 1}`;
+      const fixtures = allFixtures[currentWeek];
+      fixtures.forEach(match => {
         const matchEl = document.createElement("div");
         matchEl.className = "match";
         matchEl.innerHTML = `
-          <div><strong>${match.home}</strong> vs <strong>${match.away}</strong></div>
-          <div class="score-inputs">
-            <input type="number" inputmode="numeric" min="0" max="99" id="home-${index}" placeholder="0">
-            <input type="number" inputmode="numeric" min="0" max="99" id="away-${index}" placeholder="0">
+          <div class="teams">${match.home} vs ${match.away}</div>
+          <div class="inputs">
+            <input type="text" inputmode="numeric" placeholder="0" />
+            <input type="text" inputmode="numeric" placeholder="0" />
           </div>
-          <button class="confirm" onclick="submitScore(${index})">Zatwierdź</button>
+          <button>Zatwierdź</button>
         `;
         matchesDiv.appendChild(matchEl);
       });
     }
 
-    function changeMatchday(offset) {
-      const newIndex = currentMatchday + offset;
-      if (newIndex >= 0 && newIndex < matchdays.length) {
-        currentMatchday = newIndex;
+    function previousWeek() {
+      if (currentWeek > 0) {
+        currentWeek--;
         renderMatches();
       }
     }
 
-    function submitScore(index) {
-      const home = document.getElementById(`home-${index}`).value;
-      const away = document.getElementById(`away-${index}`).value;
-      // Tu możesz dodać zapis do localStorage lub wysłanie na serwer w przyszłości
+    function nextWeek() {
+      if (currentWeek < allFixtures.length - 1) {
+        currentWeek++;
+        renderMatches();
+      }
     }
 
     renderMatches();
   </script></body>
 </html>
+      
