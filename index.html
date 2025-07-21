@@ -1,32 +1,31 @@
-<!DOCTYPE html>
-<html lang="pl">
+<!DOCTYPE html><html lang="pl">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>FF-Typer</title>
 </head>
-<body style="font-family: sans-serif; padding: 30px;">
-  <h1>FF-Typer</h1>
-
-  <!-- Formularz do obstawiania -->
-  <form id="prediction-form" style="margin-bottom: 40px;">
-    <label>Użytkownik: <input type="text" id="user" required /></label><br><br>
-    <label>Mecz (np. LECH - LEGIA): <input type="text" id="match" required /></label><br><br>
-    <label>Wynik gospodarzy: <input type="number" id="homeScore" required /></label><br><br>
-    <label>Wynik gości: <input type="number" id="awayScore" required /></label><br><br>
-    <button type="submit">Zapisz typ</button>
-  </form>
-
-  <!-- Sekcja pokazująca wszystkie typy -->
-  <div id="all-predictions" style="margin-top: 50px; padding: 20px;">
+<body style="font-family: sans-serif; max-width: 700px; margin: auto; padding: 20px;">
+  <h1>FF-Typer</h1>  <!-- Rejestracja / Logowanie -->  <div id="auth-section">
+    <h2>Rejestracja / Logowanie</h2>
+    <input type="email" id="email" placeholder="Email" style="padding: 8px; width: 100%; margin-bottom: 10px;" />
+    <input type="password" id="password" placeholder="Hasło" style="padding: 8px; width: 100%; margin-bottom: 10px;" />
+    <button id="registerBtn" style="padding: 10px; width: 49%;">Zarejestruj się</button>
+    <button id="loginBtn" style="padding: 10px; width: 49%;">Zaloguj się</button>
+    <p id="auth-msg" style="color: green;"></p>
+  </div>  <!-- Formularz obstawiania meczu -->  <div id="typer-section" style="display: none;">
+    <h2>Obstaw mecz</h2>
+    <input type="text" id="matchId" placeholder="Nazwa meczu (np. Legia - Lech)" style="padding: 8px; width: 100%; margin-bottom: 10px;" />
+    <input type="number" id="homeScore" placeholder="Gospodarze" style="padding: 8px; width: 49%; margin-bottom: 10px;" />
+    <input type="number" id="awayScore" placeholder="Goście" style="padding: 8px; width: 49%; margin-bottom: 10px;" />
+    <button onclick="submitPrediction()" style="padding: 10px; width: 100%;">Zapisz typ</button>
+    <p id="submit-msg" style="color: green;"></p>
+  </div>  <!-- Sekcja pokazująca wszystkie typy -->  <div id="all-predictions" style="margin-top: 50px; padding: 20px;">
     <h2>Wszystkie obstawione mecze</h2>
     <p>Wczytywanie danych...</p>
-  </div>
-
-  <!-- Firebase SDK + JS -->
-  <script type="module">
+  </div>  <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-app.js";
     import { getFirestore, collection, addDoc, getDocs, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
+    import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-auth.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyDIhMW94ZY7_7w8yttJSHAwmCPR3bSTsHw",
@@ -40,39 +39,72 @@
 
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
+    const auth = getAuth();
 
-    // ZAPISYWANIE TYPU
-    const form = document.getElementById("prediction-form");
-    form.addEventListener("submit", async (e) => {
-      e.preventDefault();
-      const user = document.getElementById("user").value.trim();
-      const matchId = document.getElementById("match").value.trim();
+    const authSection = document.getElementById("auth-section");
+    const typerSection = document.getElementById("typer-section");
+    const authMsg = document.getElementById("auth-msg");
+
+    document.getElementById("registerBtn").onclick = async () => {
+      const email = document.getElementById("email").value;
+      const password = document.getElementById("password").value;
+      try {
+        await createUserWithEmailAndPassword(auth, email, password);
+        authMsg.textContent = "Zarejestrowano pomyślnie.";
+      } catch (error) {
+        authMsg.textContent = "Błąd: " + error.message;
+      }
+    };
+
+    document.getElementById("loginBtn").onclick = async () => {
+      const email = document.getElementById("email").value;
+      const password = document.getElementById("password").value;
+      try {
+        await signInWithEmailAndPassword(auth, email, password);
+        authMsg.textContent = "Zalogowano pomyślnie.";
+      } catch (error) {
+        authMsg.textContent = "Błąd: " + error.message;
+      }
+    };
+
+    onAuthStateChanged(auth, (user) => {
+      if (user) {
+        authSection.style.display = "none";
+        typerSection.style.display = "block";
+        loadAllPredictions();
+      } else {
+        authSection.style.display = "block";
+        typerSection.style.display = "none";
+      }
+    });
+
+    async function submitPrediction() {
+      const matchId = document.getElementById("matchId").value;
       const homeScore = parseInt(document.getElementById("homeScore").value);
       const awayScore = parseInt(document.getElementById("awayScore").value);
+      const user = auth.currentUser;
+      const msg = document.getElementById("submit-msg");
 
-      if (!user || !matchId || isNaN(homeScore) || isNaN(awayScore)) {
-        alert("Wypełnij poprawnie wszystkie pola.");
+      if (!user) {
+        msg.textContent = "Musisz być zalogowany.";
         return;
       }
 
       try {
         await addDoc(collection(db, "predictions"), {
-          user,
+          user: user.email,
           matchId,
           homeScore,
           awayScore,
           timestamp: serverTimestamp()
         });
-        alert("Typ zapisany!");
-        form.reset();
-        loadAllPredictions(); // Odśwież dane po zapisie
-      } catch (error) {
-        console.error("Błąd zapisu:", error);
-        alert("Błąd zapisu typu.");
+        msg.textContent = "Zapisano typ.";
+        loadAllPredictions();
+      } catch (e) {
+        msg.textContent = "Błąd zapisu: " + e.message;
       }
-    });
+    }
 
-    // WCZYTYWANIE TYPOW
     async function loadAllPredictions() {
       const querySnapshot = await getDocs(collection(db, "predictions"));
       const container = document.getElementById("all-predictions");
@@ -112,8 +144,5 @@
         ${querySnapshot.empty ? "<p>Brak obstawień.</p>" : html}
       `;
     }
-
-    loadAllPredictions();
-  </script>
-</body>
+  </script></body>
 </html>
