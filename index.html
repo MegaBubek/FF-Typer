@@ -4,206 +4,160 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>FF-Typer</title>
   <style>
-    body {
-      font-family: Arial, sans-serif;
-      margin: 0;
-      padding: 0;
-      background-color: #f5f5f5;
-      color: #222;
-    }
-    header {
-      background-color: #007bff;
-      color: white;
-      padding: 1rem;
-      text-align: center;
-    }
-    main {
-      padding: 1rem;
-      max-width: 800px;
-      margin: auto;
-    }
+    body { font-family: Arial, sans-serif; background: #f9f9f9; margin: 0; padding: 0; }
+    .container { max-width: 800px; margin: 0 auto; padding: 20px; }
+    .card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 0 10px rgba(0,0,0,0.1); margin-bottom: 20px; }
+    h1, h2 { text-align: center; }
+    input, select, button { padding: 10px; margin: 5px 0; width: 100%; }
     .hidden { display: none; }
-    input, select, button {
-      margin: 0.5rem 0;
-      padding: 0.5rem;
-      width: 100%;
-    }
-    #match-list input[type="number"] {
-      width: 50px;
-    }
-    .match {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin: 0.5rem 0;
-    }
-    #admin-view {
-      margin-top: 2rem;
-      background: #eee;
-      padding: 1rem;
-      border-radius: 8px;
-    }
-    .auth {
-      max-width: 400px;
-      margin: 2rem auto;
-      background: white;
-      padding: 1rem;
-      border-radius: 8px;
-      box-shadow: 0 0 10px rgba(0,0,0,0.1);
-    }
+    .match-row { display: flex; justify-content: space-between; align-items: center; margin: 10px 0; }
+    .match-row input { width: 50px; text-align: center; }
+    .typy { margin-top: 30px; }
+    .typy p { background: #eee; padding: 8px; border-radius: 8px; }
   </style>
-  <script src="https://www.gstatic.com/firebasejs/12.0.0/firebase-app.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/12.0.0/firebase-auth.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/12.0.0/firebase-database.js"></script>
 </head>
 <body>
-  <header>
+<div class="container">
+  <div id="auth-card" class="card">
+    <h1 id="form-title">Rejestracja</h1>
+    <input type="text" id="nick" placeholder="Nick" />
+    <input type="email" id="email" placeholder="Email" />
+    <input type="password" id="password" placeholder="Hasło" />
+    <button onclick="register()">Zarejestruj się</button>
+    <p><a href="#" onclick="switchToLogin()">Masz konto? Zaloguj się</a></p>
+  </div>  <div id="main-card" class="card hidden">
     <h1>FF-Typer</h1>
-  </header>  <main>
-    <div id="auth-container" class="auth">
-      <h2>Rejestracja</h2>
-      <input type="text" id="register-nick" placeholder="Nick">
-      <input type="email" id="register-email" placeholder="Email">
-      <input type="password" id="register-password" placeholder="Hasło">
-      <button onclick="register()">Zarejestruj się</button>
-      <p><a href="#" onclick="toggleLogin(true)">Masz już konto? Zaloguj się</a></p><div id="login-form" class="hidden">
-    <h2>Logowanie</h2>
-    <input type="email" id="login-email" placeholder="Email">
-    <input type="password" id="login-password" placeholder="Hasło">
-    <button onclick="login()">Zaloguj się</button>
-    <p><a href="#" onclick="toggleLogin(false)">Nie masz konta? Zarejestruj się</a></p>
+    <label>Wybierz kolejkę:</label>
+    <select id="kolejkaSelect" onchange="renderMatches()"></select>
+    <div id="matches"></div>
+    <div class="typy">
+      <h2>Typy innych graczy</h2>
+      <div id="typyInnych"></div>
+    </div>
   </div>
-</div>
+</div><script>
+const users = JSON.parse(localStorage.getItem('users')) || {};
+const loggedInUser = localStorage.getItem('loggedInUser');
+const matchData = {
+  1: [
+    ['Legia', 'Lech'], ['Pogoń', 'Raków'], ['Górnik', 'Widzew'], ['Piast', 'Cracovia'],
+    ['Radomiak', 'Zagłębie'], ['Jagiellonia', 'Korona'], ['Ruch', 'Stal'], ['Puszcza', 'Warta'], ['Śląsk', 'ŁKS']
+  ],
+  2: [
+    ['Lech', 'Pogoń'], ['Raków', 'Legia'], ['Cracovia', 'Radomiak'], ['Zagłębie', 'Piast'],
+    ['Warta', 'Jagiellonia'], ['Korona', 'Górnik'], ['Widzew', 'Ruch'], ['Stal', 'Puszcza'], ['ŁKS', 'Śląsk']
+  ],
+  3: [
+    ['Legia', 'Piast'], ['Pogoń', 'Cracovia'], ['Górnik', 'Puszcza'], ['Raków', 'Warta'],
+    ['Radomiak', 'Korona'], ['Jagiellonia', 'Stal'], ['Ruch', 'ŁKS'], ['Widzew', 'Zagłębie'], ['Lech', 'Śląsk']
+  ]
+};
+for(let i=4;i<=34;i++) matchData[i]=[...Array(9)].map((_,j)=>[`Drużyna ${i}${j}a`,`Drużyna ${i}${j}b`]);
 
-<div id="main-app" class="hidden">
-  <label for="matchday">Wybierz kolejkę:</label>
-  <select id="matchday" onchange="renderMatches()"></select>
-  <div id="match-list"></div>
-  <button onclick="savePredictions()">Zapisz typy</button>
-  <div id="admin-view" class="hidden">
-    <h3>Typy wszystkich graczy</h3>
-    <div id="all-predictions">Wczytywanie danych...</div>
-  </div>
-</div>
+if (loggedInUser) showMain();
 
-  </main>  <script>
-    const firebaseConfig = {
-      apiKey: "YOUR_FIREBASE_API_KEY",
-      authDomain: "ff-typer.firebaseapp.com",
-      databaseURL: "https://ff-typer-default-rtdb.firebaseio.com",
-      projectId: "ff-typer",
-      storageBucket: "ff-typer.appspot.com",
-      messagingSenderId: "123456789",
-      appId: "1:123456789:web:abc123"
+function switchToLogin() {
+  document.getElementById('form-title').innerText = 'Logowanie';
+  document.getElementById('nick').style.display = 'none';
+  document.querySelector('button').onclick = login;
+  document.querySelector('a').innerText = 'Nie masz konta? Zarejestruj się';
+  document.querySelector('a').onclick = switchToRegister;
+}
+
+function switchToRegister() {
+  document.getElementById('form-title').innerText = 'Rejestracja';
+  document.getElementById('nick').style.display = 'block';
+  document.querySelector('button').onclick = register;
+  document.querySelector('a').innerText = 'Masz konto? Zaloguj się';
+  document.querySelector('a').onclick = switchToLogin;
+}
+
+function register() {
+  const nick = document.getElementById('nick').value;
+  const email = document.getElementById('email').value;
+  const password = document.getElementById('password').value;
+  if (users[email]) return alert('Użytkownik już istnieje');
+  users[email] = {nick, email, password, typy: {}};
+  localStorage.setItem('users', JSON.stringify(users));
+  localStorage.setItem('loggedInUser', email);
+  showMain();
+}
+
+function login() {
+  const email = document.getElementById('email').value;
+  const password = document.getElementById('password').value;
+  if (!users[email] || users[email].password !== password) return alert('Błędny email lub hasło');
+  localStorage.setItem('loggedInUser', email);
+  showMain();
+}
+
+function showMain() {
+  document.getElementById('auth-card').classList.add('hidden');
+  document.getElementById('main-card').classList.remove('hidden');
+  const kolejkaSelect = document.getElementById('kolejkaSelect');
+  for (let i = 1; i <= 34; i++) {
+    const opt = document.createElement('option');
+    opt.value = i;
+    opt.innerText = `Kolejka ${i}`;
+    kolejkaSelect.appendChild(opt);
+  }
+  renderMatches();
+}
+
+function renderMatches() {
+  const k = document.getElementById('kolejkaSelect').value;
+  const container = document.getElementById('matches');
+  container.innerHTML = '';
+  const email = localStorage.getItem('loggedInUser');
+  const user = users[email];
+  const typy = user.typy[k] || {};
+  matchData[k].forEach(([home, away], idx) => {
+    const row = document.createElement('div');
+    row.className = 'match-row';
+    const inputHome = document.createElement('input');
+    inputHome.type = 'number';
+    inputHome.disabled = typy[idx] !== undefined;
+    const inputAway = document.createElement('input');
+    inputAway.type = 'number';
+    inputAway.disabled = typy[idx] !== undefined;
+    if (typy[idx]) {
+      inputHome.value = typy[idx][0];
+      inputAway.value = typy[idx][1];
+    }
+    const btn = document.createElement('button');
+    btn.innerText = 'Zatwierdź';
+    btn.disabled = typy[idx] !== undefined;
+    btn.onclick = () => {
+      if (!inputHome.value || !inputAway.value) return alert('Wpisz wynik');
+      users[email].typy[k] = users[email].typy[k] || {};
+      users[email].typy[k][idx] = [inputHome.value, inputAway.value];
+      localStorage.setItem('users', JSON.stringify(users));
+      renderMatches();
     };
-    firebase.initializeApp(firebaseConfig);
-    const auth = firebase.auth();
-    const db = firebase.database();
+    row.innerHTML = `${home} `;
+    row.appendChild(inputHome);
+    row.innerHTML += ' : ';
+    row.appendChild(inputAway);
+    row.innerHTML += ` ${away} `;
+    row.appendChild(btn);
+    container.appendChild(row);
+  });
+  renderTypy(k);
+}
 
-    let userId = null;
-    const adminEmail = "twoj@email.com";
-
-    const realMatchdays = {
-      1: ["Lech - Legia", "Cracovia - Widzew", "Pogoń - Raków"],
-      2: ["Zagłębie - Śląsk", "Ruch - Korona", "Jagiellonia - Piast"],
-      3: ["Górnik - ŁKS", "Stal - Radomiak", "Pogoń - Lech"]
-    };
-    const allMatchdays = {};
-    for (let i = 1; i <= 34; i++) {
-      allMatchdays[i] = realMatchdays[i] || [
-        `Zespół A${i} - Zespół B${i}`,
-        `Zespół C${i} - Zespół D${i}`,
-        `Zespół E${i} - Zespół F${i}`
-      ];
-    }
-
-    function toggleLogin(showLogin) {
-      document.getElementById('login-form').classList.toggle('hidden', !showLogin);
-    }
-
-    function register() {
-      const email = document.getElementById('register-email').value;
-      const password = document.getElementById('register-password').value;
-      const nick = document.getElementById('register-nick').value;
-      auth.createUserWithEmailAndPassword(email, password).then(res => {
-        db.ref(`users/${res.user.uid}`).set({ nick, email });
-      });
-    }
-
-    function login() {
-      const email = document.getElementById('login-email').value;
-      const password = document.getElementById('login-password').value;
-      auth.signInWithEmailAndPassword(email, password);
-    }
-
-    auth.onAuthStateChanged(user => {
-      if (user) {
-        userId = user.uid;
-        document.getElementById('auth-container').classList.add('hidden');
-        document.getElementById('main-app').classList.remove('hidden');
-        populateMatchdays();
-        renderMatches();
-        if (user.email === adminEmail) {
-          document.getElementById('admin-view').classList.remove('hidden');
-          loadAllPredictions();
-        }
-      }
+function renderTypy(k) {
+  const typyDiv = document.getElementById('typyInnych');
+  typyDiv.innerHTML = '';
+  Object.values(users).forEach(user => {
+    const userTypy = user.typy[k];
+    if (!userTypy) return;
+    Object.entries(userTypy).forEach(([idx, val]) => {
+      const match = matchData[k][idx];
+      const p = document.createElement('p');
+      p.innerText = `${user.nick}: ${match[0]} ${val[0]} : ${val[1]} ${match[1]}`;
+      typyDiv.appendChild(p);
     });
-
-    function populateMatchdays() {
-      const sel = document.getElementById('matchday');
-      for (let i = 1; i <= 34; i++) {
-        const opt = document.createElement('option');
-        opt.value = i;
-        opt.textContent = `Kolejka ${i}`;
-        sel.appendChild(opt);
-      }
-    }
-
-    function renderMatches() {
-      const index = document.getElementById('matchday').value;
-      const list = document.getElementById('match-list');
-      list.innerHTML = '';
-      allMatchdays[index].forEach((m, i) => {
-        const div = document.createElement('div');
-        div.className = 'match';
-        div.innerHTML = `
-          <span>${m}</span>
-          <input type="number" id="home-${i}" placeholder="Gospodarze"> :
-          <input type="number" id="away-${i}" placeholder="Goście">
-        `;
-        list.appendChild(div);
-      });
-    }
-
-    function savePredictions() {
-      const index = document.getElementById('matchday').value;
-      const matches = allMatchdays[index];
-      const predictions = {};
-      matches.forEach((m, i) => {
-        const home = document.getElementById(`home-${i}`).value;
-        const away = document.getElementById(`away-${i}`).value;
-        predictions[m] = `${home}:${away}`;
-      });
-      db.ref(`predictions/${index}/${userId}`).set(predictions);
-    }
-
-    function loadAllPredictions() {
-      const container = document.getElementById('all-predictions');
-      db.ref('predictions').on('value', snap => {
-        const data = snap.val();
-        container.innerHTML = '';
-        for (const kolejka in data) {
-          const round = document.createElement('div');
-          round.innerHTML = `<h4>Kolejka ${kolejka}</h4>`;
-          for (const uid in data[kolejka]) {
-            const userPred = document.createElement('div');
-            userPred.textContent = `${uid}: ${JSON.stringify(data[kolejka][uid])}`;
-            round.appendChild(userPred);
-          }
-          container.appendChild(round);
-        }
-      });
-    }
-  </script></body>
+  });
+}
+</script></body>
 </html>
