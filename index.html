@@ -1,5 +1,4 @@
-    <!DOCTYPE html><html lang="pl">
-<head>
+<!DOCTYPE html><html lang="pl"><head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Football Fans Typer</title>
@@ -86,7 +85,8 @@
   </style>
 </head>
 <body>
-  <header>Football Fans Typer</header>  <div class="screen active" id="register-screen">
+  <header>Football Fans Typer</header>
+  <div class="screen active" id="register-screen">
     <form class="auth-form" onsubmit="register(event)">
       <h2>Zarejestruj się</h2>
       <input type="text" id="reg-nick" placeholder="Nick" required />
@@ -100,20 +100,38 @@
       <button type="submit">Zarejestruj</button>
       <p><a href="#" onclick="showScreen('login-screen')">Masz konto? Zaloguj się</a></p>
     </form>
-  </div>  <div class="screen" id="login-screen">
+  </div>
+  <div class="screen" id="login-screen">
     <form class="auth-form" onsubmit="login(event)">
       <h2>Zaloguj się</h2>
       <input type="text" id="login-email" placeholder="Email" required />
       <input type="password" id="login-pass" placeholder="Hasło" required />
       <button type="submit">Zaloguj</button>
     </form>
-  </div>  <div class="screen" id="main-screen">
+  </div>
+  <div class="screen" id="main-screen">
     <div id="match-list"></div>
     <div class="admin-log">
       <h3>Typy użytkowników</h3>
       <ul id="admin-logs"></ul>
     </div>
-  </div>  <script>
+  </div>  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-app.js";
+    import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-analytics.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyDIhMW94ZY7_7w8yttJSHAwmCPR3bSTsHw",
+      authDomain: "ff-typer.firebaseapp.com",
+      projectId: "ff-typer",
+      storageBucket: "ff-typer.appspot.com",
+      messagingSenderId: "22978913956",
+      appId: "1:22978913956:web:6e6113180e48142d952831",
+      measurementId: "G-2BFZY3PWFZ"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const analytics = getAnalytics(app);
+  </script>  <script>
     const matches = [
       ["Legia Warszawa", "Lech Poznań"],
       ["Raków Częstochowa", "Górnik Zabrze"],
@@ -211,4 +229,4 @@
       loadMatches();
     }
   </script></body>
-    </html>
+</html>
