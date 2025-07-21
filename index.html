@@ -1,162 +1,209 @@
-<!DOCTYPE html>
-<html lang="pl">
-<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>FF-Typer Ekstraklasa 25/26</title>
+<!DOCTYPE html><html lang="pl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>FF-Typer</title>
   <style>
-    body { font-family: Arial, sans-serif; background:#f0f0f0; margin:0; padding:20px; }
-    .screen { display:none; max-width:600px; background:#fff; margin:auto; margin-top:30px; padding:20px; border-radius:8px; box-shadow:0 2px 6px rgba(0,0,0,0.1); }
-    .active { display:block; }
-    input, select, button { width:100%; padding:10px; margin:8px 0; border-radius:5px; border:1px solid #ccc; }
-    button { background:#007bff; color:#fff; cursor:pointer; }
-    table { width:100%; border-collapse:collapse; margin-top:20px; }
-    th, td { border:1px solid #ccc; padding:8px; font-size:14px; text-align:center; }
-    th { background:#eee; }
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: #f5f5f5;
+      color: #222;
+    }
+    header {
+      background-color: #007bff;
+      color: white;
+      padding: 1rem;
+      text-align: center;
+    }
+    main {
+      padding: 1rem;
+      max-width: 800px;
+      margin: auto;
+    }
+    .hidden { display: none; }
+    input, select, button {
+      margin: 0.5rem 0;
+      padding: 0.5rem;
+      width: 100%;
+    }
+    #match-list input[type="number"] {
+      width: 50px;
+    }
+    .match {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin: 0.5rem 0;
+    }
+    #admin-view {
+      margin-top: 2rem;
+      background: #eee;
+      padding: 1rem;
+      border-radius: 8px;
+    }
+    .auth {
+      max-width: 400px;
+      margin: 2rem auto;
+      background: white;
+      padding: 1rem;
+      border-radius: 8px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
   </style>
+  <script src="https://www.gstatic.com/firebasejs/12.0.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/12.0.0/firebase-auth.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/12.0.0/firebase-database.js"></script>
 </head>
 <body>
-
-<!-- REJESTRACJA -->
-<div id="registerScreen" class="screen active">
-  <h2>Rejestracja</h2>
-  <input id="regNick" placeholder="Nick" />
-  <input id="regEmail" type="email" placeholder="Email" />
-  <input id="regPass" type="password" placeholder="Hasło" />
-  <button onclick="register()">Zarejestruj się</button>
-  <p><a href="#" onclick="showScreen('loginScreen')">Masz konto? Zaloguj się</a></p>
-</div>
-
-<!-- LOGOWANIE -->
-<div id="loginScreen" class="screen">
-  <h2>Logowanie</h2>
-  <input id="logEmail" type="email" placeholder="Email" />
-  <input id="logPass" type="password" placeholder="Hasło" />
-  <button onclick="login()">Zaloguj się</button>
-  <p><a href="#" onclick="showScreen('registerScreen')">Nie masz konta? Zarejestruj się</a></p>
-</div>
-
-<!-- STRONA GŁÓWNA -->
-<div id="mainScreen" class="screen">
-  <h2>Witaj, <span id="userNick"></span>!</h2>
-  <label>
-    Wybierz kolejkę:
-    <select id="roundSelect"></select>
-  </label>
-  <div id="matches"></div>
-  <button onclick="savePredictions()">Zapisz typy</button>
-  <div id="adminPanel">
-    <h3>Obstawione meczów (tylko Ty - admin)</h3>
-    <div id="allPredictions">Wczytywanie...</div>
+  <header>
+    <h1>FF-Typer</h1>
+  </header>  <main>
+    <div id="auth-container" class="auth">
+      <h2>Rejestracja</h2>
+      <input type="text" id="register-nick" placeholder="Nick">
+      <input type="email" id="register-email" placeholder="Email">
+      <input type="password" id="register-password" placeholder="Hasło">
+      <button onclick="register()">Zarejestruj się</button>
+      <p><a href="#" onclick="toggleLogin(true)">Masz już konto? Zaloguj się</a></p><div id="login-form" class="hidden">
+    <h2>Logowanie</h2>
+    <input type="email" id="login-email" placeholder="Email">
+    <input type="password" id="login-password" placeholder="Hasło">
+    <button onclick="login()">Zaloguj się</button>
+    <p><a href="#" onclick="toggleLogin(false)">Nie masz konta? Zarejestruj się</a></p>
   </div>
-  <button onclick="logout()">Wyloguj się</button>
 </div>
 
-<script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-app.js";
-import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-auth.js";
-import { getFirestore, collection, addDoc, getDocs, serverTimestamp, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
+<div id="main-app" class="hidden">
+  <label for="matchday">Wybierz kolejkę:</label>
+  <select id="matchday" onchange="renderMatches()"></select>
+  <div id="match-list"></div>
+  <button onclick="savePredictions()">Zapisz typy</button>
+  <div id="admin-view" class="hidden">
+    <h3>Typy wszystkich graczy</h3>
+    <div id="all-predictions">Wczytywanie danych...</div>
+  </div>
+</div>
 
-// ✅ Wklej swój firebaseConfig stąd:
-const firebaseConfig = {
-  apiKey: "AIzaSyDIhMW94ZY7_7w8yttJSHAwmCPR3bSTsHw",
-  authDomain: "ff-typer.firebaseapp.com",
-  projectId: "ff-typer",
-  storageBucket: "ff-typer.appspot.com",
-  messagingSenderId: "22978913956",
-  appId: "1:22978913956:web:6e6113180e48142d952831"
-};
+  </main>  <script>
+    const firebaseConfig = {
+      apiKey: "YOUR_FIREBASE_API_KEY",
+      authDomain: "ff-typer.firebaseapp.com",
+      databaseURL: "https://ff-typer-default-rtdb.firebaseio.com",
+      projectId: "ff-typer",
+      storageBucket: "ff-typer.appspot.com",
+      messagingSenderId: "123456789",
+      appId: "1:123456789:web:abc123"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db = firebase.database();
 
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-const db = getFirestore(app);
+    let userId = null;
+    const adminEmail = "twoj@email.com";
 
-const schedule = {
-  1: ["Jagiellonia Białystok - Bruk-Bet Termalica Nieciecza","Lech Poznań - Cracovia","Widzew Łódź - Zagłębie Lubin"],
-  2: ["Arka Gdynia - Radomiak Radom","Lechia Gdańsk - Lech Poznań","Pogoń Szczecin - Motor Lublin"],
-  3: ["Wisła Płock - Piast Gliwice","Bruk-Bet Termalica - Pogoń Szczecin","Legia Warszawa - Arka Gdynia"]
-};
+    const realMatchdays = {
+      1: ["Lech - Legia", "Cracovia - Widzew", "Pogoń - Raków"],
+      2: ["Zagłębie - Śląsk", "Ruch - Korona", "Jagiellonia - Piast"],
+      3: ["Górnik - ŁKS", "Stal - Radomiak", "Pogoń - Lech"]
+    };
+    const allMatchdays = {};
+    for (let i = 1; i <= 34; i++) {
+      allMatchdays[i] = realMatchdays[i] || [
+        `Zespół A${i} - Zespół B${i}`,
+        `Zespół C${i} - Zespół D${i}`,
+        `Zespół E${i} - Zespół F${i}`
+      ];
+    }
 
-const nickEl = document.getElementById("userNick");
-const roundSelect = document.getElementById("roundSelect");
+    function toggleLogin(showLogin) {
+      document.getElementById('login-form').classList.toggle('hidden', !showLogin);
+    }
 
-Object.keys(schedule).forEach(r=>{
-  let o=document.createElement("option");
-  o.value=r; o.text="Kolejka "+r;
-  roundSelect.append(o);
-});
+    function register() {
+      const email = document.getElementById('register-email').value;
+      const password = document.getElementById('register-password').value;
+      const nick = document.getElementById('register-nick').value;
+      auth.createUserWithEmailAndPassword(email, password).then(res => {
+        db.ref(`users/${res.user.uid}`).set({ nick, email });
+      });
+    }
 
-function showScreen(id){
-  document.querySelectorAll(".screen").forEach(s=>s.classList.remove("active"));
-  document.getElementById(id).classList.add("active");
-}
+    function login() {
+      const email = document.getElementById('login-email').value;
+      const password = document.getElementById('login-password').value;
+      auth.signInWithEmailAndPassword(email, password);
+    }
 
-async function register(){
-  try{
-    await createUserWithEmailAndPassword(auth, regEmail.value, regPass.value);
-    const user = auth.currentUser;
-    await setDoc(doc(db,"users",user.uid),{nick:regNick.value});
-  }catch(e){ alert(e.message); }
-}
+    auth.onAuthStateChanged(user => {
+      if (user) {
+        userId = user.uid;
+        document.getElementById('auth-container').classList.add('hidden');
+        document.getElementById('main-app').classList.remove('hidden');
+        populateMatchdays();
+        renderMatches();
+        if (user.email === adminEmail) {
+          document.getElementById('admin-view').classList.remove('hidden');
+          loadAllPredictions();
+        }
+      }
+    });
 
-async function login(){
-  try{ await signInWithEmailAndPassword(auth, logEmail.value, logPass.value); }
-  catch(e){ alert(e.message); }
-}
+    function populateMatchdays() {
+      const sel = document.getElementById('matchday');
+      for (let i = 1; i <= 34; i++) {
+        const opt = document.createElement('option');
+        opt.value = i;
+        opt.textContent = `Kolejka ${i}`;
+        sel.appendChild(opt);
+      }
+    }
 
-function logout(){
-  signOut(auth);
-}
+    function renderMatches() {
+      const index = document.getElementById('matchday').value;
+      const list = document.getElementById('match-list');
+      list.innerHTML = '';
+      allMatchdays[index].forEach((m, i) => {
+        const div = document.createElement('div');
+        div.className = 'match';
+        div.innerHTML = `
+          <span>${m}</span>
+          <input type="number" id="home-${i}" placeholder="Gospodarze"> :
+          <input type="number" id="away-${i}" placeholder="Goście">
+        `;
+        list.appendChild(div);
+      });
+    }
 
-function renderMatches(){
-  const sel = roundSelect.value;
-  const mDiv = document.getElementById("matches");
-  mDiv.innerHTML = "";
-  schedule[sel].forEach((m,i)=>{
-    mDiv.innerHTML+=`
-      <div class="match">
-        <strong>${m}</strong><br>
-        <input placeholder="np. 2:1" id="t${i}"/>
-      </div>`;
-  });
-}
+    function savePredictions() {
+      const index = document.getElementById('matchday').value;
+      const matches = allMatchdays[index];
+      const predictions = {};
+      matches.forEach((m, i) => {
+        const home = document.getElementById(`home-${i}`).value;
+        const away = document.getElementById(`away-${i}`).value;
+        predictions[m] = `${home}:${away}`;
+      });
+      db.ref(`predictions/${index}/${userId}`).set(predictions);
+    }
 
-async function savePredictions(){
-  const uid = auth.currentUser.uid;
-  const rnd = roundSelect.value;
-  const data = {round:rnd, timestamp:serverTimestamp()};
-  schedule[rnd].forEach((_,i)=>{
-    const v = document.getElementById("t"+i).value;
-    if(v) data["m"+i]=v;
-  });
-  await addDoc(collection(db,"predictions"),{uid, ...data});
-  alert("Zapisano!");
-  loadAdmin();
-}
-
-async function loadAdmin(){
-  const ap = document.getElementById("allPredictions");
-  ap.innerHTML = "";
-  const snap = await getDocs(collection(db,"predictions"));
-  for(const d of snap.docs){
-    const u = await getDoc(doc(db,"users",d.data().uid));
-    const nick = u.exists()?u.data().nick:"?";
-    const dat = d.data();
-    let html = `<p><strong>${nick}</strong> - kolejka ${dat.round}<br>`;
-    Object.keys(dat).filter(k=>k.startsWith("m")).forEach(k=> html+=dat[k]+"<br>");
-    html+=`<em>${new Date(dat.timestamp.seconds*1000).toLocaleString()}</em></p>`;
-    if(localStorage.getItem("nick")==="admin") ap.innerHTML+=html;
-  }
-}
-
-onAuthStateChanged(auth,user=>{
-  if(user){
-    showScreen("mainScreen");
-    doc(db,"users",user.uid).get().then(u=>nickEl.textContent=u.data().nick);
-    renderMatches();
-    loadAdmin();
-  } else showScreen("registerScreen");
-});
-
-roundSelect.onchange=renderMatches;
-</script>
-</body>
+    function loadAllPredictions() {
+      const container = document.getElementById('all-predictions');
+      db.ref('predictions').on('value', snap => {
+        const data = snap.val();
+        container.innerHTML = '';
+        for (const kolejka in data) {
+          const round = document.createElement('div');
+          round.innerHTML = `<h4>Kolejka ${kolejka}</h4>`;
+          for (const uid in data[kolejka]) {
+            const userPred = document.createElement('div');
+            userPred.textContent = `${uid}: ${JSON.stringify(data[kolejka][uid])}`;
+            round.appendChild(userPred);
+          }
+          container.appendChild(round);
+        }
+      });
+    }
+  </script></body>
 </html>
