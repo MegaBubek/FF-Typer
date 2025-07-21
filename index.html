@@ -5,202 +5,78 @@
   <title>FF-Typer</title>
   <style>
     body {
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      background-color: #f7f7f7;
+      font-family: 'Segoe UI', sans-serif;
+      background-color: #f8f9fa;
+      color: #333;
       margin: 0;
       padding: 0;
     }
-    header {
-      background-color: #003366;
-      color: white;
+    .container {
+      max-width: 600px;
+      margin: 50px auto;
       padding: 20px;
+      background: #fff;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+      border-radius: 10px;
+    }
+    h1, h2 {
       text-align: center;
     }
-    .container {
-      max-width: 800px;
-      margin: 20px auto;
-      background: white;
-      padding: 20px;
-      border-radius: 12px;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-    }
-    h2 {
-      color: #003366;
-    }
-    input, select, button {
+    input, button, select {
+      display: block;
+      width: 100%;
       margin: 10px 0;
       padding: 10px;
-      width: 100%;
-      border-radius: 6px;
+      border-radius: 5px;
       border: 1px solid #ccc;
-      box-sizing: border-box;
     }
-    button {
-      background-color: #0055cc;
-      color: white;
-      font-weight: bold;
-      cursor: pointer;
-      transition: background-color 0.3s;
-    }
-    button:hover {
-      background-color: #003f99;
+    .hidden {
+      display: none;
     }
     table {
       width: 100%;
       border-collapse: collapse;
-      margin-top: 20px;
     }
     th, td {
-      padding: 10px;
+      padding: 8px;
       border: 1px solid #ccc;
-      text-align: center;
     }
-    .auth-section {
-      display: none;
+    .nav {
+      text-align: center;
+      margin-top: 20px;
+    }
+    .nav a {
+      margin: 0 10px;
+      text-decoration: none;
+      color: #007bff;
+      font-weight: bold;
     }
   </style>
 </head>
 <body>
-  <header>
-    <h1>FF-Typer Ekstraklasa 2025/26</h1>
-  </header>  <div class="container" id="auth">
-    <h2>Rejestracja</h2>
-    <input type="text" id="register-nick" placeholder="Nick">
+  <div class="container" id="login-page">
+    <h1>Logowanie</h1>
+    <input type="email" id="login-email" placeholder="Email">
+    <input type="password" id="login-password" placeholder="Hasło">
+    <button onclick="login()">Zaloguj się</button>
+    <div class="nav">
+      <a href="#" onclick="showRegister()">Nie masz konta? Zarejestruj się</a>
+    </div>
+  </div>  <div class="container hidden" id="register-page">
+    <h1>Rejestracja</h1>
+    <input type="text" id="register-nick" placeholder="Nazwa użytkownika">
     <input type="email" id="register-email" placeholder="Email">
     <input type="password" id="register-password" placeholder="Hasło">
-    <button onclick="registerUser()">Zarejestruj się</button><h2>Logowanie</h2>
-<input type="email" id="login-email" placeholder="Email">
-<input type="password" id="login-password" placeholder="Hasło">
-<button onclick="loginUser()">Zaloguj się</button>
-
-  </div>  <div class="container auth-section" id="main-app">
-    <h2>Typowanie</h2>
-    <label for="kolejka">Wybierz kolejkę:</label>
-    <select id="kolejka" onchange="renderMatches()"></select><div id="matches"></div>
-<button onclick="submitPredictions()">Zapisz typy</button>
-
-<h2>Wszystkie obstawienia</h2>
-<div id="all-predictions"><p>Wczytywanie danych...</p></div>
-
+    <button onclick="register()">Zarejestruj się</button>
+    <div class="nav">
+      <a href="#" onclick="showLogin()">Masz konto? Zaloguj się</a>
+    </div>
+  </div>  <div class="container hidden" id="main-page">
+    <h1>FF-Typer</h1>
+    <div id="match-list"></div>
+    <h2>Wszystkie typy</h2>
+    <div id="all-predictions">Wczytywanie danych...</div>
   </div>  <script type="module">
-    import { initializeApp } from 'https://www.gstatic.com/firebasejs/12.0.0/firebase-app.js';
-    import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/12.0.0/firebase-auth.js';
-    import { getFirestore, collection, addDoc, getDocs, doc, setDoc, serverTimestamp } from 'https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js';
-
-    const firebaseConfig = {
-      apiKey: "YOUR_API_KEY",
-      authDomain: "ff-typer.firebaseapp.com",
-      projectId: "ff-typer",
-      storageBucket: "ff-typer.appspot.com",
-      messagingSenderId: "22978913956",
-      appId: "1:22978913956:web:6e6113180e48142d952831"
-    };
-
-    const app = initializeApp(firebaseConfig);
-    const auth = getAuth();
-    const db = getFirestore(app);
-
-    const allMatches = {
-      1: ["Lech Poznań - Legia Warszawa", "Jagiellonia - Pogoń Szczecin"],
-      2: ["Legia Warszawa - Raków Częstochowa", "Widzew - Lech Poznań"],
-      3: ["Cracovia - Legia Warszawa", "Lech Poznań - Górnik Zabrze"]
-      // Dodaj kolejne kolejki
-    };
-
-    const kolejkaSelect = document.getElementById("kolejka");
-    Object.keys(allMatches).forEach(k => {
-      const option = document.createElement("option");
-      option.value = k;
-      option.textContent = "Kolejka " + k;
-      kolejkaSelect.appendChild(option);
-    });
-
-    let currentUser = null;
-
-    function renderMatches() {
-      const container = document.getElementById("matches");
-      container.innerHTML = "";
-      const selected = kolejkaSelect.value;
-      allMatches[selected].forEach((match, idx) => {
-        container.innerHTML += `
-          <div>
-            <strong>${match}</strong><br>
-            <input type="number" id="home-${idx}" placeholder="Gospodarz" min="0">
-            <input type="number" id="away-${idx}" placeholder="Goście" min="0">
-          </div>
-        `;
-      });
-    }
-
-    async function submitPredictions() {
-      const selected = kolejkaSelect.value;
-      const matches = allMatches[selected];
-
-      for (let i = 0; i < matches.length; i++) {
-        const home = document.getElementById(`home-${i}`).value;
-        const away = document.getElementById(`away-${i}`).value;
-        if (home === "" || away === "") continue;
-
-        await addDoc(collection(db, "predictions"), {
-          user: currentUser?.email,
-          match: matches[i],
-          homeScore: parseInt(home),
-          awayScore: parseInt(away),
-          timestamp: serverTimestamp(),
-          kolejka: selected
-        });
-      }
-
-      alert("Zapisano typy!");
-      loadAllPredictions();
-    }
-
-    async function loadAllPredictions() {
-      const container = document.getElementById("all-predictions");
-      const querySnapshot = await getDocs(collection(db, "predictions"));
-
-      let html = `<table><thead><tr><th>Użytkownik</th><th>Kolejka</th><th>Mecz</th><th>Typ</th></tr></thead><tbody>`;
-      querySnapshot.forEach(doc => {
-        const d = doc.data();
-        html += `<tr><td>${d.user}</td><td>${d.kolejka}</td><td>${d.match}</td><td>${d.homeScore}:${d.awayScore}</td></tr>`;
-      });
-      html += `</tbody></table>`;
-
-      container.innerHTML = html;
-    }
-
-    function registerUser() {
-      const email = document.getElementById("register-email").value;
-      const password = document.getElementById("register-password").value;
-
-      createUserWithEmailAndPassword(auth, email, password)
-        .then(() => alert("Rejestracja zakończona sukcesem."))
-        .catch(e => alert("Błąd: " + e.message));
-    }
-
-    function loginUser() {
-      const email = document.getElementById("login-email").value;
-      const password = document.getElementById("login-password").value;
-
-      signInWithEmailAndPassword(auth, email, password)
-        .then(userCred => {
-          currentUser = userCred.user;
-          document.getElementById("auth").style.display = "none";
-          document.getElementById("main-app").style.display = "block";
-          renderMatches();
-          loadAllPredictions();
-        })
-        .catch(e => alert("Błąd: " + e.message));
-    }
-
-    onAuthStateChanged(auth, user => {
-      if (user) {
-        currentUser = user;
-        document.getElementById("auth").style.display = "none";
-        document.getElementById("main-app").style.display = "block";
-        renderMatches();
-        loadAllPredictions();
-      }
-    });
-  </script></body>
-</html>
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-app.js";
+    import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-auth.js";
+    import
