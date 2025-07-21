@@ -1,190 +1,174 @@
 <!DOCTYPE html><html lang="pl">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>FF-Typer</title>
   <style>
-    body {
-      font-family: Arial, sans-serif;
-      margin: 0;
-      padding: 0;
-      background: #f5f5f5;
-      color: #333;
-    }
-    .container {
-      max-width: 900px;
-      margin: 0 auto;
-      padding: 20px;
-    }
-    h1, h2 {
-      text-align: center;
-    }
-    select, input[type="number"] {
-      padding: 5px;
-      margin: 5px;
-      font-size: 16px;
-    }
-    .match {
-      background: #fff;
-      padding: 10px;
-      margin-bottom: 10px;
-      border-radius: 8px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      box-shadow: 0 0 5px rgba(0,0,0,0.1);
-    }
-    .match input {
-      width: 50px;
-      text-align: center;
-    }
-    .match button {
-      padding: 6px 12px;
-      background: #007bff;
-      color: white;
-      border: none;
-      border-radius: 4px;
-      cursor: pointer;
-    }
-    .match button:disabled {
-      background: #ccc;
-      cursor: not-allowed;
-    }
-    .types-table {
-      margin-top: 30px;
-      background: #fff;
-      padding: 10px;
-      border-radius: 8px;
-    }
-    .types-table table {
-      width: 100%;
-      border-collapse: collapse;
-    }
-    .types-table th, .types-table td {
-      padding: 6px;
-      border: 1px solid #ddd;
-      text-align: center;
-    }
+    body { font-family: Arial, sans-serif; background: #f4f4f4; margin: 0; padding: 0; }
+    .container { max-width: 600px; margin: 30px auto; background: white; padding: 20px; border-radius: 10px; }
+    .hidden { display: none; }
+    input, select, button { width: 100%; padding: 10px; margin: 5px 0; }
+    .match { margin: 10px 0; padding: 10px; border: 1px solid #ccc; border-radius: 5px; }
+    .typy { background: #eee; padding: 5px; margin-top: 5px; font-size: 14px; }
+    .topbar { text-align: right; margin-bottom: 10px; }
   </style>
 </head>
 <body>
   <div class="container">
-    <h1>FF-Typer – Typuj mecze Ekstraklasy 2025/26</h1>
-    <h2>Witaj, <span id="username"></span>!</h2><label for="kolejkaSelect">Wybierz kolejkę:</label>
-<select id="kolejkaSelect"></select>
-
-<div id="matches"></div>
-
-<div class="types-table">
-  <h2>Typy graczy</h2>
-  <table id="typyGraczyTable">
-    <thead>
-      <tr>
-        <th>Gracz</th>
-        <th>Mecz</th>
-        <th>Typ</th>
-      </tr>
-    </thead>
-    <tbody></tbody>
-  </table>
+    <div id="login-view">
+      <h2>Logowanie</h2>
+      <input type="email" id="login-email" placeholder="Email">
+      <input type="password" id="login-password" placeholder="Hasło">
+      <button onclick="login()">Zaloguj się</button>
+      <p>Nie masz konta? <a href="#" onclick="showRegister()">Zarejestruj się</a></p>
+    </div><div id="register-view" class="hidden">
+  <h2>Rejestracja</h2>
+  <input type="text" id="register-nick" placeholder="Nick">
+  <input type="email" id="register-email" placeholder="Email">
+  <input type="password" id="register-password" placeholder="Hasło">
+  <button onclick="register()">Zarejestruj się</button>
+  <p>Masz już konto? <a href="#" onclick="showLogin()">Zaloguj się</a></p>
 </div>
 
-  </div>  <script>
-    const allMatches = {
-      1: [
-        ['Legia', 'Jagiellonia'], ['Lech', 'Pogoń'], ['Widzew', 'Zagłębie'],
-        ['Piast', 'Cracovia'], ['Górnik', 'Ruch'], ['Korona', 'ŁKS'],
-        ['Śląsk', 'Stal'], ['Radomiak', 'Warta'], ['Raków', 'Polonia']
-      ],
-      2: [
-        ['Jagiellonia', 'Warta'], ['Pogoń', 'Legia'], ['Zagłębie', 'Lech'],
-        ['Cracovia', 'Widzew'], ['Ruch', 'Piast'], ['ŁKS', 'Górnik'],
-        ['Stal', 'Korona'], ['Polonia', 'Śląsk'], ['Raków', 'Radomiak']
-      ],
-      3: [
-        ['Lech', 'Legia'], ['Jagiellonia', 'Raków'], ['Pogoń', 'Radomiak'],
-        ['Widzew', 'Polonia'], ['Górnik', 'Cracovia'], ['Korona', 'Ruch'],
-        ['ŁKS', 'Piast'], ['Stal', 'Zagłębie'], ['Śląsk', 'Warta']
-      ]
+<div id="main-view" class="hidden">
+  <div class="topbar">
+    <span id="user-info"></span>
+    <button onclick="logout()">Wyloguj</button>
+  </div>
+  <h2>Typowanie meczów</h2>
+  <label for="kolejka">Wybierz kolejkę:</label>
+  <select id="kolejka" onchange="loadMatches()"></select>
+  <div id="matches"></div>
+</div>
+
+  </div>  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+    import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+    import { getFirestore, collection, doc, setDoc, getDoc, getDocs } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyDIhMW94ZY7_7w8yttJSHAwmCPR3bSTsHw",
+      authDomain: "ff-typer.firebaseapp.com",
+      projectId: "ff-typer",
+      storageBucket: "ff-typer.appspot.com",
+      messagingSenderId: "22978913956",
+      appId: "1:22978913956:web:6e6113180e48142d952831",
+      measurementId: "G-2BFZY3PWFZ"
     };
 
-    // Uzupełnij 4-34 kolejki losowo (lub zostaw puste)
-    for (let i = 4; i <= 34; i++) {
-      allMatches[i] = Array(9).fill(['Zespół A', 'Zespół B']);
-    }
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth();
+    const db = getFirestore();
 
-    const kolejkaSelect = document.getElementById('kolejkaSelect');
+    const loginView = document.getElementById('login-view');
+    const registerView = document.getElementById('register-view');
+    const mainView = document.getElementById('main-view');
+    const userInfo = document.getElementById('user-info');
+    const kolejkaSelect = document.getElementById('kolejka');
     const matchesDiv = document.getElementById('matches');
-    const typyTableBody = document.querySelector('#typyGraczyTable tbody');
-    const username = localStorage.getItem('username') || 'Gość';
-    document.getElementById('username').textContent = username;
+
+    const term = {
+      1: ["Legia - Widzew", "Lech - Raków", "Pogoń - Piast"],
+      2: ["Górnik - Śląsk", "Zagłębie - Cracovia", "Korona - Stal"],
+      3: ["Puszcza - Ruch", "Jagiellonia - Radomiak", "ŁKS - Warta"]
+    };
 
     for (let i = 1; i <= 34; i++) {
-      const option = document.createElement('option');
-      option.value = i;
-      option.textContent = `Kolejka ${i}`;
-      kolejkaSelect.appendChild(option);
+      const opt = document.createElement('option');
+      opt.value = i;
+      opt.textContent = `Kolejka ${i}`;
+      kolejkaSelect.appendChild(opt);
+      if (!term[i]) term[i] = Array.from({length: 3}, (_, j) => `Zespół ${i}-${j+1} - Zespół ${i}-${j+2}`);
     }
 
-    kolejkaSelect.addEventListener('change', showMatches);
+    function showLogin() {
+      loginView.classList.remove('hidden');
+      registerView.classList.add('hidden');
+      mainView.classList.add('hidden');
+    }
 
-    function showMatches() {
-      const kolejka = kolejkaSelect.value;
-      matchesDiv.innerHTML = '';
-      typyTableBody.innerHTML = '';
-      const saved = JSON.parse(localStorage.getItem('typy') || '{}');
+    function showRegister() {
+      loginView.classList.add('hidden');
+      registerView.classList.remove('hidden');
+      mainView.classList.add('hidden');
+    }
 
-      allMatches[kolejka].forEach(([home, away], i) => {
-        const key = `${kolejka}_${i}`;
-        const wrapper = document.createElement('div');
-        wrapper.className = 'match';
+    function showMain() {
+      loginView.classList.add('hidden');
+      registerView.classList.add('hidden');
+      mainView.classList.remove('hidden');
+      userInfo.textContent = `Zalogowano jako ${auth.currentUser.email}`;
+      loadMatches();
+    }
 
-        const label = document.createElement('span');
-        label.textContent = `${home} vs ${away}`;
-
-        const inputHome = document.createElement('input');
-        inputHome.type = 'number';
-        inputHome.min = 0;
-        inputHome.value = saved[username]?.[key]?.[0] ?? '';
-        inputHome.disabled = saved[username]?.[key];
-
-        const inputAway = document.createElement('input');
-        inputAway.type = 'number';
-        inputAway.min = 0;
-        inputAway.value = saved[username]?.[key]?.[1] ?? '';
-        inputAway.disabled = saved[username]?.[key];
-
-        const btn = document.createElement('button');
-        btn.textContent = 'Zapisz';
-        btn.disabled = saved[username]?.[key];
-
-        btn.addEventListener('click', () => {
-          if (!saved[username]) saved[username] = {};
-          saved[username][key] = [inputHome.value, inputAway.value];
-          localStorage.setItem('typy', JSON.stringify(saved));
-          showMatches();
-        });
-
-        wrapper.append(label, inputHome, inputAway, btn);
-        matchesDiv.appendChild(wrapper);
-      });
-
-      // Wyświetlanie typów graczy
-      for (const user in saved) {
-        for (const key in saved[user]) {
-          if (key.startsWith(`${kolejka}_`)) {
-            const [matchIndex] = key.split('_').slice(1);
-            const [home, away] = allMatches[kolejka][matchIndex];
-            const [g1, g2] = saved[user][key];
-            const row = document.createElement('tr');
-            row.innerHTML = `<td>${user}</td><td>${home} - ${away}</td><td>${g1} : ${g2}</td>`;
-            typyTableBody.appendChild(row);
-          }
-        }
+    async function register() {
+      const email = document.getElementById('register-email').value;
+      const password = document.getElementById('register-password').value;
+      const nick = document.getElementById('register-nick').value;
+      try {
+        const cred = await createUserWithEmailAndPassword(auth, email, password);
+        await setDoc(doc(db, "users", cred.user.uid), { nick });
+      } catch (err) {
+        alert(err.message);
       }
     }
 
-    kolejkaSelect.value = '1';
-    showMatches();
+    async function login() {
+      const email = document.getElementById('login-email').value;
+      const password = document.getElementById('login-password').value;
+      try {
+        await signInWithEmailAndPassword(auth, email, password);
+      } catch (err) {
+        alert(err.message);
+      }
+    }
+
+    async function logout() {
+      await signOut(auth);
+    }
+
+    async function loadMatches() {
+      const user = auth.currentUser;
+      if (!user) return;
+      const kolejka = kolejkaSelect.value;
+      const mecze = term[kolejka];
+      matchesDiv.innerHTML = '';
+
+      const allDocs = await getDocs(collection(db, `typy-kolejka-${kolejka}`));
+      const typyMap = {};
+      allDocs.forEach(doc => { typyMap[doc.id] = doc.data(); });
+
+      mecze.forEach((mecz, idx) => {
+        const div = document.createElement('div');
+        div.className = 'match';
+        div.innerHTML = `
+          <b>${mecz}</b><br>
+          <input type="text" id="typ-${idx}" placeholder="Twój typ">
+          <button onclick="saveType(${idx}, '${kolejka}', '${mecz}')">Zapisz</button>
+          <div class="typy">
+            Typy graczy:<br>
+            ${Object.entries(typyMap).map(([uid, typy]) => `${typy[mecz] ? typy[mecz] : ''}`).filter(Boolean).join('<br>')}
+          </div>
+        `;
+        matchesDiv.appendChild(div);
+      });
+    }
+
+    window.saveType = async function(idx, kolejka, mecz) {
+      const user = auth.currentUser;
+      if (!user) return;
+      const val = document.getElementById(`typ-${idx}`).value;
+      const ref = doc(db, `typy-kolejka-${kolejka}`, user.uid);
+      const snap = await getDoc(ref);
+      const data = snap.exists() ? snap.data() : {};
+      data[mecz] = val;
+      await setDoc(ref, data);
+      loadMatches();
+    };
+
+    onAuthStateChanged(auth, (user) => {
+      if (user) showMain();
+      else showLogin();
+    });
   </script></body>
 </html>
