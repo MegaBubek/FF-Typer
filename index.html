@@ -1,84 +1,93 @@
-<!DOCTYPE html><html lang="pl">
+<!DOCTYPE html>
+<html lang="pl">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>FF-Typer</title>
   <style>
     body {
-      font-family: 'Segoe UI', sans-serif;
-      background-color: #f8f9fa;
+      font-family: Arial, sans-serif;
+      margin: 20px;
+      background-color: #f2f2f2;
       color: #333;
-      margin: 0;
-      padding: 0;
-    }
-    .container {
-      max-width: 600px;
-      margin: 50px auto;
-      padding: 20px;
-      background: #fff;
-      box-shadow: 0 0 10px rgba(0,0,0,0.1);
-      border-radius: 10px;
     }
     h1, h2 {
       text-align: center;
     }
-    input, button, select {
-      display: block;
-      width: 100%;
-      margin: 10px 0;
-      padding: 10px;
-      border-radius: 5px;
-      border: 1px solid #ccc;
+    .match {
+      background: white;
+      padding: 15px;
+      margin: 10px auto;
+      max-width: 500px;
+      border-radius: 10px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
     }
-    .hidden {
-      display: none;
+    .match input {
+      width: 40px;
+      padding: 5px;
+      text-align: center;
+    }
+    button {
+      background: #007bff;
+      color: white;
+      padding: 10px 15px;
+      border: none;
+      border-radius: 5px;
+      margin-top: 10px;
+      cursor: pointer;
+    }
+    button:hover {
+      background: #0056b3;
     }
     table {
       width: 100%;
       border-collapse: collapse;
+      margin-top: 30px;
     }
     th, td {
-      padding: 8px;
       border: 1px solid #ccc;
+      padding: 10px;
     }
-    .nav {
-      text-align: center;
-      margin-top: 20px;
-    }
-    .nav a {
-      margin: 0 10px;
-      text-decoration: none;
-      color: #007bff;
-      font-weight: bold;
+    th {
+      background: #eee;
     }
   </style>
 </head>
 <body>
-  <div class="container" id="login-page">
-    <h1>Logowanie</h1>
-    <input type="email" id="login-email" placeholder="Email">
-    <input type="password" id="login-password" placeholder="Hasło">
-    <button onclick="login()">Zaloguj się</button>
-    <div class="nav">
-      <a href="#" onclick="showRegister()">Nie masz konta? Zarejestruj się</a>
+  <h1>FF-Typer - 1. kolejka Ekstraklasy 2025/26</h1>
+
+  <div id="matches">
+    <!-- Mecze -->
+    <div class="match" data-id="1">
+      Legia Warszawa vs Lech Poznań <br/>
+      <input type="number" min="0" class="home-score" /> :
+      <input type="number" min="0" class="away-score" />
     </div>
-  </div>  <div class="container hidden" id="register-page">
-    <h1>Rejestracja</h1>
-    <input type="text" id="register-nick" placeholder="Nazwa użytkownika">
-    <input type="email" id="register-email" placeholder="Email">
-    <input type="password" id="register-password" placeholder="Hasło">
-    <button onclick="register()">Zarejestruj się</button>
-    <div class="nav">
-      <a href="#" onclick="showLogin()">Masz konto? Zaloguj się</a>
+    <div class="match" data-id="2">
+      Raków Częstochowa vs Górnik Zabrze <br/>
+      <input type="number" min="0" class="home-score" /> :
+      <input type="number" min="0" class="away-score" />
     </div>
-  </div>  <div class="container hidden" id="main-page">
-    <h1>FF-Typer</h1>
-    <div id="match-list"></div>
-    <h2>Wszystkie typy</h2>
-    <div id="all-predictions">Wczytywanie danych...</div>
-  </div>  <script type="module">
+    <div class="match" data-id="3">
+      Pogoń Szczecin vs Jagiellonia Białystok <br/>
+      <input type="number" min="0" class="home-score" /> :
+      <input type="number" min="0" class="away-score" />
+    </div>
+    <!-- Dodaj resztę meczów tutaj -->
+  </div>
+
+  <div style="text-align: center;">
+    <button onclick="savePredictions()">Zapisz typy</button>
+  </div>
+
+  <div id="all-predictions">
+    <h2>Wszystkie obstawione mecze</h2>
+    <p>Wczytywanie danych...</p>
+  </div>
+
+  <!-- Firebase -->
+  <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-app.js";
-    import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-auth.js";
     import { getFirestore, collection, addDoc, getDocs, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
 
     const firebaseConfig = {
@@ -91,73 +100,69 @@
     };
 
     const app = initializeApp(firebaseConfig);
-    const auth = getAuth();
     const db = getFirestore(app);
 
-    const loginPage = document.getElementById("login-page");
-    const registerPage = document.getElementById("register-page");
-    const mainPage = document.getElementById("main-page");
+    async function savePredictions() {
+      const matches = document.querySelectorAll(".match");
+      const user = localStorage.getItem("user") || "Anonim";
 
-    window.showRegister = () => {
-      loginPage.classList.add("hidden");
-      registerPage.classList.remove("hidden");
-    }
+      for (const match of matches) {
+        const matchId = match.getAttribute("data-id");
+        const home = match.querySelector(".home-score").value;
+        const away = match.querySelector(".away-score").value;
 
-    window.showLogin = () => {
-      registerPage.classList.add("hidden");
-      loginPage.classList.remove("hidden");
-    }
+        if (home === "" || away === "") continue;
 
-    function showMain() {
-      loginPage.classList.add("hidden");
-      registerPage.classList.add("hidden");
-      mainPage.classList.remove("hidden");
-    }
-
-    window.register = async () => {
-      const email = document.getElementById("register-email").value;
-      const password = document.getElementById("register-password").value;
-      const nick = document.getElementById("register-nick").value;
-      try {
-        await createUserWithEmailAndPassword(auth, email, password);
-        alert("Zarejestrowano pomyślnie!");
-        showMain();
-      } catch (err) {
-        alert(err.message);
+        await addDoc(collection(db, "predictions"), {
+          user: user,
+          matchId: matchId,
+          homeScore: parseInt(home),
+          awayScore: parseInt(away),
+          timestamp: serverTimestamp()
+        });
       }
+
+      alert("Zapisano typy!");
+      loadAllPredictions();
     }
 
-    window.login = async () => {
-      const email = document.getElementById("login-email").value;
-      const password = document.getElementById("login-password").value;
-      try {
-        await signInWithEmailAndPassword(auth, email, password);
-        showMain();
-      } catch (err) {
-        alert(err.message);
-      }
-    }
-
-    onAuthStateChanged(auth, (user) => {
-      if (user) {
-        showMain();
-        loadPredictions();
-      }
-    });
-
-    async function loadPredictions() {
+    async function loadAllPredictions() {
       const querySnapshot = await getDocs(collection(db, "predictions"));
       const container = document.getElementById("all-predictions");
-      let html = "<table><tr><th>Użytkownik</th><th>Mecz</th><th>Typ</th><th>Data</th></tr>";
+
+      let html = `
+        <table>
+          <thead>
+            <tr>
+              <th>Użytkownik</th>
+              <th>Mecz ID</th>
+              <th>Typ</th>
+              <th>Data</th>
+            </tr>
+          </thead>
+          <tbody>
+      `;
+
       querySnapshot.forEach((doc) => {
-        const d = doc.data();
-        const date = d.timestamp?.seconds
-          ? new Date(d.timestamp.seconds * 1000).toLocaleString("pl-PL")
+        const data = doc.data();
+        const date = data.timestamp?.seconds
+          ? new Date(data.timestamp.seconds * 1000).toLocaleString("pl-PL")
           : "-";
-        html += `<tr><td>${d.user || "-"}</td><td>${d.matchId || "-"}</td><td>${d.homeScore}:${d.awayScore}</td><td>${date}</td></tr>`;
+        html += `
+          <tr>
+            <td>${data.user || "?"}</td>
+            <td>${data.matchId}</td>
+            <td>${data.homeScore}:${data.awayScore}</td>
+            <td>${date}</td>
+          </tr>
+        `;
       });
-      html += "</table>";
+
+      html += "</tbody></table>";
       container.innerHTML = html;
     }
-  </script></body>
+
+    loadAllPredictions();
+  </script>
+</body>
 </html>
