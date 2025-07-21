@@ -1,224 +1,115 @@
 <!DOCTYPE html><html lang="pl">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>FF-Typer</title>
   <style>
     body {
-      font-family: 'Segoe UI', sans-serif;
+      font-family: Arial, sans-serif;
+      background-color: #f2f2f2;
       margin: 0;
-      background-color: #f9f9f9;
-      color: #222;
-    }header {
-  background-color: #1e88e5;
-  color: white;
-  padding: 20px;
-  text-align: center;
-}
-
-main {
-  max-width: 900px;
-  margin: 30px auto;
-  padding: 20px;
-  background: white;
-  border-radius: 12px;
-  box-shadow: 0 0 15px rgba(0,0,0,0.1);
-}
-
-h2 {
-  color: #1e88e5;
-}
-
-input, select, button {
-  padding: 10px;
-  margin: 5px 0;
-  width: 100%;
-  max-width: 400px;
-  border-radius: 6px;
-  border: 1px solid #ccc;
-  font-size: 16px;
-}
-
-button {
-  background-color: #1e88e5;
-  color: white;
-  border: none;
-  cursor: pointer;
-}
-
-button:hover {
-  background-color: #1565c0;
-}
-
-table {
-  width: 100%;
-  border-collapse: collapse;
-  margin-top: 20px;
-}
-
-th, td {
-  padding: 10px;
-  border: 1px solid #ccc;
-  text-align: center;
-}
-
-th {
-  background-color: #eeeeee;
-}
-
-.section {
-  margin-top: 40px;
-}
-
-.center {
-  text-align: center;
-}
-
-#user-info {
-  margin: 10px 0;
-  color: #444;
-}
-
+      padding: 0;
+      color: #333;
+    }
+    header {
+      background-color: #1e88e5;
+      color: white;
+      padding: 20px;
+      text-align: center;
+    }
+    .container {
+      max-width: 800px;
+      margin: 30px auto;
+      background: white;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+    input, button {
+      padding: 10px;
+      margin: 5px 0;
+      width: 100%;
+      box-sizing: border-box;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    th, td {
+      padding: 10px;
+      border: 1px solid #ccc;
+      text-align: center;
+    }
+    .match-input {
+      display: flex;
+      gap: 10px;
+    }
+    .match-input input {
+      width: 40px;
+    }
+    .logout {
+      background: #e53935;
+      color: white;
+      border: none;
+      margin-top: 10px;
+    }
   </style>
 </head>
-<body><header>
-  <h1>⚽ FF-Typer</h1>
-  <p>Typuj wyniki meczów Ekstraklasy i sprawdź, co typują inni!</p>
-</header><main>
-  <div class="section center">
-    <h2>Zaloguj się lub zarejestruj</h2>
+<body>
+  <header>
+    <h1>FF-Typer – Ekstraklasa 2025/26</h1>
+  </header>  <div class="container" id="auth-section">
+    <h2>Rejestracja / Logowanie</h2>
     <input type="email" id="email" placeholder="Email">
     <input type="password" id="password" placeholder="Hasło">
-    <button onclick="register()">Zarejestruj</button>
-    <button onclick="login()">Zaloguj</button>
-    <div id="user-info"></div>
-  </div>  <div class="section">
-    <h2>Typowanie meczu</h2>
-    <select id="match">
-      <option value="Legia - Lech">Legia - Lech</option>
-      <option value="Pogoń - Jagiellonia">Pogoń - Jagiellonia</option>
-      <option value="Widzew - Raków">Widzew - Raków</option>
-      <option value="Zagłębie - Górnik">Zagłębie - Górnik</option>
-      <option value="Piast - Cracovia">Piast - Cracovia</option>
-    </select>
-    <input type="number" id="homeScore" placeholder="Gospodarze">
-    <input type="number" id="awayScore" placeholder="Goście">
-    <button onclick="submitPrediction()">Zatwierdź typ</button>
-  </div>  <div class="section" id="all-predictions">
+    <button id="register">Zarejestruj się</button>
+    <button id="login">Zaloguj się</button>
+    <button id="logout" class="logout" style="display:none;">Wyloguj się</button>
+  </div>  <div class="container" id="main-section" style="display: none;">
+    <h2>Typuj wyniki – 1. kolejka</h2>
+    <div id="matches"></div>
+    <button id="submit-predictions">Zapisz typy</button>
+  </div>  <div class="container" id="all-predictions">
     <h2>Wszystkie obstawione mecze</h2>
     <p>Wczytywanie danych...</p>
-  </div>
-</main><script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-app.js";
-  import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-auth.js";
-  import { getFirestore, collection, addDoc, getDocs, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
+  </div>  <script type="module">
+    import { initializeApp } from 'https://www.gstatic.com/firebasejs/12.0.0/firebase-app.js';
+    import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/12.0.0/firebase-auth.js';
+    import { getFirestore, collection, addDoc, getDocs, serverTimestamp } from 'https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js';
 
-  const firebaseConfig = {
-    apiKey: "AIzaSyDIhMW94ZY7_7w8yttJSHAwmCPR3bSTsHw",
-    authDomain: "ff-typer.firebaseapp.com",
-    projectId: "ff-typer",
-    storageBucket: "ff-typer.appspot.com",
-    messagingSenderId: "22978913956",
-    appId: "1:22978913956:web:6e6113180e48142d952831",
-    measurementId: "G-2BFZY3PWFZ"
-  };
+    const firebaseConfig = {
+      apiKey: "YOUR_API_KEY_HERE",
+      authDomain: "ff-typer.firebaseapp.com",
+      projectId: "ff-typer",
+      storageBucket: "ff-typer.appspot.com",
+      messagingSenderId: "22978913956",
+      appId: "1:22978913956:web:6e6113180e48142d952831",
+      measurementId: "G-2BFZY3PWFZ"
+    };
 
-  const app = initializeApp(firebaseConfig);
-  const auth = getAuth(app);
-  const db = getFirestore(app);
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
 
-  async function register() {
-    const email = document.getElementById("email").value;
-    const password = document.getElementById("password").value;
-    try {
-      await createUserWithEmailAndPassword(auth, email, password);
-      alert("Zarejestrowano pomyślnie!");
-    } catch (error) {
-      alert(error.message);
-    }
-  }
+    const matchesList = [
+      "Legia Warszawa – Lech Poznań",
+      "Pogoń Szczecin – Raków Częstochowa",
+      "Zagłębie Lubin – Śląsk Wrocław",
+      "Cracovia – Widzew Łódź",
+      "Korona Kielce – Górnik Zabrze",
+      "Jagiellonia – Piast Gliwice",
+      "Radomiak – Stal Mielec",
+      "ŁKS Łódź – Ruch Chorzów"
+    ];
 
-  async function login() {
-    const email = document.getElementById("email").value;
-    const password = document.getElementById("password").value;
-    try {
-      await signInWithEmailAndPassword(auth, email, password);
-      alert("Zalogowano pomyślnie!");
-    } catch (error) {
-      alert(error.message);
-    }
-  }
+    const email = document.getElementById('email');
+    const password = document.getElementById('password');
+    const registerBtn = document.getElementById('register');
+    const loginBtn = document.getElementById('login');
+    const logoutBtn = document.getElementById('logout');
+    const authSection = document.getElementById('auth-section');
+    const mainSection = document.getElementById('main-section');
 
-  onAuthStateChanged(auth, (user) => {
-    const userInfo = document.getElementById("user-info");
-    if (user) {
-      userInfo.textContent = `Zalogowany jako: ${user.email}`;
-    } else {
-      userInfo.textContent = "Nie jesteś zalogowany.";
-    }
-  });
-
-  async function submitPrediction() {
-    const match = document.getElementById("match").value;
-    const homeScore = document.getElementById("homeScore").value;
-    const awayScore = document.getElementById("awayScore").value;
-    const user = auth.currentUser?.email || "anonim";
-    if (!match || homeScore === "" || awayScore === "") {
-      alert("Uzupełnij wszystkie pola!");
-      return;
-    }
-    try {
-      await addDoc(collection(db, "predictions"), {
-        user,
-        matchId: match,
-        homeScore,
-        awayScore,
-        timestamp: serverTimestamp()
-      });
-      alert("Typ zapisany!");
-      loadAllPredictions();
-    } catch (e) {
-      alert("Błąd przy zapisie typowania: " + e);
-    }
-  }
-
-  async function loadAllPredictions() {
-    const querySnapshot = await getDocs(collection(db, "predictions"));
-    const container = document.getElementById("all-predictions");
-
-    let html = `
-      <table>
-        <thead>
-          <tr>
-            <th>Użytkownik</th>
-            <th>Mecz</th>
-            <th>Typ</th>
-            <th>Data</th>
-          </tr>
-        </thead>
-        <tbody>
-    `;
-
-    querySnapshot.forEach((doc) => {
-      const data = doc.data();
-      const date = data.timestamp?.seconds
-        ? new Date(data.timestamp.seconds * 1000).toLocaleString("pl-PL")
-        : "-";
-
-      html += `
-        <tr>
-          <td>${data.user || "?"}</td>
-          <td>${data.matchId || "?"}</td>
-          <td>${data.homeScore}:${data.awayScore}</td>
-          <td>${date}</td>
-        </tr>
-      `;
-    });
-
-    html += `</tbody></table>`;
-    container.innerHTML = `<h2>Wszystkie obstawione mecze</h2>${querySnapshot.empty ? "<p>Brak obstawień.</p>" : html}`;
-  }
-
-  loadAllPredictions();
-</script></body>
-</html>
+    registerBtn.onclick = () => {
+      createUserWithEmailAndPassword(auth, email.value, password.value)
+        .then(() => alert
