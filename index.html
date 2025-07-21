@@ -1,168 +1,165 @@
 <!DOCTYPE html>
 <html lang="pl">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta charset="UTF-8" /><meta name="viewport" content="width=device-width,initial-scale=1">
   <title>FF-Typer</title>
   <style>
-    body {
-      font-family: Arial, sans-serif;
-      margin: 20px;
-      background-color: #f2f2f2;
-      color: #333;
-    }
-    h1, h2 {
-      text-align: center;
-    }
-    .match {
-      background: white;
-      padding: 15px;
-      margin: 10px auto;
-      max-width: 500px;
-      border-radius: 10px;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-    }
-    .match input {
-      width: 40px;
-      padding: 5px;
-      text-align: center;
-    }
-    button {
-      background: #007bff;
-      color: white;
-      padding: 10px 15px;
-      border: none;
-      border-radius: 5px;
-      margin-top: 10px;
-      cursor: pointer;
-    }
-    button:hover {
-      background: #0056b3;
-    }
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 30px;
-    }
-    th, td {
-      border: 1px solid #ccc;
-      padding: 10px;
-    }
-    th {
-      background: #eee;
-    }
+    body { font-family: Arial, sans-serif; background:#f2f2f2; margin:0; padding:20px;}
+    .screen { display:none; max-width:800px; margin:auto; background:#fff; padding:20px; border-radius:8px; box-shadow:0 2px 6px rgba(0,0,0,0.1); }
+    .active { display:block; }
+    input, button, select { width:100%; padding:10px; margin:6px 0; border-radius:4px; border:1px solid #ccc; }
+    button { background:#007bff; color:#fff; cursor:pointer; }
+    table { width:100%; border-collapse:collapse; }
+    th, td { border:1px solid #ccc; padding:8px; text-align:center; }
+    th { background:#eee; }
   </style>
 </head>
 <body>
-  <h1>FF-Typer - 1. kolejka Ekstraklasy 2025/26</h1>
 
-  <div id="matches">
-    <!-- Mecze -->
-    <div class="match" data-id="1">
-      Legia Warszawa vs Lech Poznań <br/>
-      <input type="number" min="0" class="home-score" /> :
-      <input type="number" min="0" class="away-score" />
-    </div>
-    <div class="match" data-id="2">
-      Raków Częstochowa vs Górnik Zabrze <br/>
-      <input type="number" min="0" class="home-score" /> :
-      <input type="number" min="0" class="away-score" />
-    </div>
-    <div class="match" data-id="3">
-      Pogoń Szczecin vs Jagiellonia Białystok <br/>
-      <input type="number" min="0" class="home-score" /> :
-      <input type="number" min="0" class="away-score" />
-    </div>
-    <!-- Dodaj resztę meczów tutaj -->
-  </div>
+<!-- REJESTRACJA -->
+<div id="register-screen" class="screen active">
+  <h2>Rejestracja</h2>
+  <input id="reg-nick" placeholder="Nick" />
+  <input id="reg-email" type="email" placeholder="Email" />
+  <input id="reg-pass" type="password" placeholder="Hasło" />
+  <button onclick="register()">Zarejestruj się</button>
+  <p>Masz już konto? <a href="#" onclick="show('login-screen')">Zaloguj się</a></p>
+</div>
 
-  <div style="text-align: center;">
-    <button onclick="savePredictions()">Zapisz typy</button>
-  </div>
+<!-- LOGOWANIE -->
+<div id="login-screen" class="screen">
+  <h2>Logowanie</h2>
+  <input id="log-email" type="email" placeholder="Email" />
+  <input id="log-pass" type="password" placeholder="Hasło" />
+  <button onclick="login()">Zaloguj się</button>
+  <p>Nowy? <a href="#" onclick="show('register-screen')">Zarejestruj się</a></p>
+</div>
 
-  <div id="all-predictions">
-    <h2>Wszystkie obstawione mecze</h2>
-    <p>Wczytywanie danych...</p>
-  </div>
+<!-- STRONA GŁÓWNA -->
+<div id="main-screen" class="screen">
+  <h2>Witaj, <span id="userNick"></span>!</h2>
+  <label>Kolejka:&nbsp;
+    <select id="roundSelect" onchange="renderMatches()"></select>
+  </label>
+  <div id="matches"></div>
+  <button onclick="savePredictions()">Zapisz typy</button>
+  <h2>Obstawienia</h2>
+  <div id="all-predictions">Ładowanie...</div>
+  <button onclick="logout()">Wyloguj się</button>
+</div>
 
-  <!-- Firebase -->
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-app.js";
-    import { getFirestore, collection, addDoc, getDocs, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
+<script type="module">
+// === FIREBASE ===
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-app.js";
+import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-auth.js";
+import { getFirestore, collection, addDoc, getDocs, serverTimestamp, query, orderBy } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
 
-    const firebaseConfig = {
-      apiKey: "AIzaSyDIhMW94ZY7_7w8yttJSHAwmCPR3bSTsHw",
-      authDomain: "ff-typer.firebaseapp.com",
-      projectId: "ff-typer",
-      storageBucket: "ff-typer.appspot.com",
-      messagingSenderId: "22978913956",
-      appId: "1:22978913956:web:6e6113180e48142d952831"
-    };
+const cfg = {
+  apiKey:"AIzaSyDIhMW94ZY7_7w8yttJSHAwmCPR3bSTsHw",
+  authDomain:"ff-typer.firebaseapp.com", projectId:"ff-typer",
+  storageBucket:"ff-typer.appspot.com", messagingSenderId:"22978913956",
+  appId:"1:22978913956:web:6e6113180e48142d952831"
+};
+const app = initializeApp(cfg), auth = getAuth(app), db = getFirestore(app);
 
-    const app = initializeApp(firebaseConfig);
-    const db = getFirestore(app);
+// === TERMINARZ KOLEJEK 1-3 ===
+const schedules = {
+  1:[["Legia","Lech"],["Raków","Górnik"],["Lechia","Pogoń"]],
+  2:[["Lech","Raków"],["Górnik","Legia"],["Pogoń","Lechia"]],
+  3:[["Raków","Pogoń"],["Legia","Lechia"],["Lech","Górnik"]]
+};
+const roundSel = document.getElementById("roundSelect");
+Object.keys(schedules).forEach(r=>{
+  let opt = document.createElement("option");
+  opt.value=opt.text=`Kolejka ${r}`;
+  roundSel.append(opt);
+});
 
-    async function savePredictions() {
-      const matches = document.querySelectorAll(".match");
-      const user = localStorage.getItem("user") || "Anonim";
+// === przełączanie ekranów ===
+function show(id){
+  document.querySelectorAll(".screen").forEach(s=>s.classList.remove("active"));
+  document.getElementById(id).classList.add("active");
+}
 
-      for (const match of matches) {
-        const matchId = match.getAttribute("data-id");
-        const home = match.querySelector(".home-score").value;
-        const away = match.querySelector(".away-score").value;
+// === REJESTRACJA ===
+async function register(){
+  let nick=reg-nick.value.trim(), em=reg-email.value, pw=reg-pass.value;
+  if(!nick||!em||!pw){alert("Wypełnij..."); return;}
+  try{
+    await createUserWithEmailAndPassword(auth,em,pw);
+    localStorage.setItem("nick", nick);
+    alert("Zarejestrowano!");
+    show("main-screen");
+  } catch(e){ alert(e.message); }
+}
 
-        if (home === "" || away === "") continue;
+// === LOGOWANIE ===
+async function login(){
+  try{ await signInWithEmailAndPassword(auth, log-email.value, log-pass.value); }
+  catch(e){ alert(e.message); }
+}
 
-        await addDoc(collection(db, "predictions"), {
-          user: user,
-          matchId: matchId,
-          homeScore: parseInt(home),
-          awayScore: parseInt(away),
-          timestamp: serverTimestamp()
-        });
-      }
+// === WYLOGOWANIE ===
+function logout(){
+  signOut(auth);
+  show("login-screen");
+}
 
-      alert("Zapisano typy!");
-      loadAllPredictions();
+// === po zmianie stanu Auth ===
+onAuthStateChanged(auth, u=>{
+  if(u){
+    userNick.textContent = localStorage.getItem("nick") || u.email;
+    renderMatches(); loadAll();
+    show("main-screen");
+  } else show("login-screen");
+});
+
+// === RYSOWANIE MECZÓW ===
+function renderMatches(){
+  let r = parseInt(roundSel.value.replace("Kolejka ",""));
+  let html="";
+  schedules[r].forEach((m,i)=>{
+    html+=`<div>${m[0]} vs ${m[1]} &nbsp;
+      <input id="h${i}" type="number" min="0" placeholder="G:"> :
+      <input id="a${i}" type="number" min="0" placeholder="G:">
+    </div>`;
+  });
+  matches.innerHTML = html;
+}
+
+// === ZAPIS TYPÓW ===
+async function savePredictions(){
+  let u = auth.currentUser;
+  if(!u){alert("Zaloguj się."); return;}
+  let r = parseInt(roundSel.value.replace("Kolejka ",""));
+  for(let i=0;i<schedules[r].length;i++){
+    let h = document.getElementById("h"+i).value;
+    let a = document.getElementById("a"+i).value;
+    if(!h||!a) continue;
+    await addDoc(collection(db,"predictions"), {
+      nick: localStorage.getItem("nick"), round: r,
+      match: schedules[r][i][0]+" vs "+schedules[r][i][1],
+      home: parseInt(h), away: parseInt(a),
+      timestamp: serverTimestamp()
+    });
+  }
+  alert("Zapisano!");
+  loadAll();
+}
+
+// === WYŚWIETLANIE WSZYSTKICH TYPÓW (tylko admin widzi wszystko) ===
+async function loadAll(){
+  const snap = await getDocs(query(collection(db,"predictions"),orderBy("timestamp","desc")));
+  let html="<table><tr><th>Nick</th><th>Kolejka</th><th>Mecz</th><th>Typ</th><th>Data</th></tr>";
+  snap.forEach(d=>{
+    let dt = d.data(), date = dt.timestamp?.seconds ? new Date(dt.timestamp.seconds*1000).toLocaleString("pl-PL") : "";
+    if(localStorage.getItem("nick") === "admin"){
+      html+="<tr><td>"+dt.nick+"</td><td>"+dt.round+"</td><td>"+dt.match+"</td><td>"+dt.home+":"+dt.away+"</td><td>"+date+"</td></tr>";
     }
-
-    async function loadAllPredictions() {
-      const querySnapshot = await getDocs(collection(db, "predictions"));
-      const container = document.getElementById("all-predictions");
-
-      let html = `
-        <table>
-          <thead>
-            <tr>
-              <th>Użytkownik</th>
-              <th>Mecz ID</th>
-              <th>Typ</th>
-              <th>Data</th>
-            </tr>
-          </thead>
-          <tbody>
-      `;
-
-      querySnapshot.forEach((doc) => {
-        const data = doc.data();
-        const date = data.timestamp?.seconds
-          ? new Date(data.timestamp.seconds * 1000).toLocaleString("pl-PL")
-          : "-";
-        html += `
-          <tr>
-            <td>${data.user || "?"}</td>
-            <td>${data.matchId}</td>
-            <td>${data.homeScore}:${data.awayScore}</td>
-            <td>${date}</td>
-          </tr>
-        `;
-      });
-
-      html += "</tbody></table>";
-      container.innerHTML = html;
-    }
-
-    loadAllPredictions();
-  </script>
+  });
+  html+="</table>";
+  all-predictions.innerHTML = html;
+}
+</script>
 </body>
 </html>
