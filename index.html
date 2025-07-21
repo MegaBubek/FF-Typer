@@ -1,27 +1,55 @@
 <!DOCTYPE html><html lang="pl">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>FF-Typer</title>
   <style>
-    body { font-family: Arial, sans-serif; margin: 20px; background-color: #f2f2f2; }
-    .match { background: #fff; padding: 10px; margin-bottom: 10px; border-radius: 8px; box-shadow: 0 0 5px rgba(0,0,0,0.1); }
-    .match input { width: 30px; text-align: center; }
-    .button { margin-top: 5px; }
-    #logoutBtn { position: fixed; top: 10px; right: 10px; padding: 5px 10px; }
-    #matchList { max-width: 600px; margin: auto; }
-    #typyGraczy { max-width: 600px; margin: 40px auto; background: #fff; padding: 15px; border-radius: 8px; box-shadow: 0 0 5px rgba(0,0,0,0.1); }
+    body { font-family: Arial, sans-serif; margin: 0; padding: 0; background-color: #f4f4f4; color: #333; }
+    .container { max-width: 800px; margin: auto; padding: 20px; }
+    .hidden { display: none; }
+    .match { border: 1px solid #ccc; padding: 10px; margin-bottom: 10px; border-radius: 8px; background-color: #fff; }
+    .match input { width: 50px; text-align: center; }
+    .match button { margin-left: 10px; }
+    .match-list { margin-top: 20px; }
+    .match-typers { font-size: 0.9em; color: #555; margin-top: 5px; }
+    .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+    .queue-selector { margin-top: 20px; }
+    .queue-selector select { padding: 5px; font-size: 1em; }
+    .logout-btn { background-color: #e74c3c; color: #fff; padding: 5px 10px; border: none; border-radius: 4px; cursor: pointer; }
   </style>
 </head>
-<body><button id="logoutBtn">Wyloguj się</button>
+<body>
+  <div class="container">
+    <div id="login-view">
+      <h2>Logowanie</h2>
+      <input type="email" id="login-email" placeholder="Email" /><br><br>
+      <input type="password" id="login-password" placeholder="Hasło" /><br><br>
+      <button onclick="login()">Zaloguj się</button>
+      <p>Nie masz konta? <a href="#" onclick="showRegister()">Zarejestruj się</a></p>
+    </div><div id="register-view" class="hidden">
+  <h2>Rejestracja</h2>
+  <input type="text" id="register-nickname" placeholder="Nick" /><br><br>
+  <input type="email" id="register-email" placeholder="Email" /><br><br>
+  <input type="password" id="register-password" placeholder="Hasło" /><br><br>
+  <button onclick="register()">Zarejestruj się</button>
+  <p>Masz już konto? <a href="#" onclick="showLogin()">Zaloguj się</a></p>
+</div>
 
-  <h1>Typowanie - 1. kolejka</h1>
-  <div id="matchList"></div>  <h2>Typy graczy</h2>
-  <div id="typyGraczy"></div>  <!-- Firebase SDK -->  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-    import { getAuth, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-    import { getFirestore, collection, doc, getDoc, getDocs, setDoc, query, where } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+<div id="main-view" class="hidden">
+  <div class="header">
+    <h2>FF-Typer</h2>
+    <button class="logout-btn" onclick="logout()">Wyloguj</button>
+  </div>
 
+  <div class="queue-selector">
+    <label for="queue-select">Wybierz kolejkę:</label>
+    <select id="queue-select" onchange="renderMatches()"></select>
+  </div>
+
+  <div id="match-list" class="match-list"></div>
+</div>
+
+  </div>  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>  <script>
     const firebaseConfig = {
       apiKey: "AIzaSyDIhMW94ZY7_7w8yttJSHAwmCPR3bSTsHw",
       authDomain: "ff-typer.firebaseapp.com",
@@ -32,86 +60,125 @@
       measurementId: "G-2BFZY3PWFZ"
     };
 
-    const app = initializeApp(firebaseConfig);
-    const auth = getAuth();
-    const db = getFirestore(app);
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db = firebase.firestore();
 
-    const matches = [
-      { id: "1", team1: "Legia Warszawa", team2: "Lech Poznań" },
-      { id: "2", team1: "Raków Częstochowa", team2: "Pogoń Szczecin" },
-      { id: "3", team1: "Górnik Zabrze", team2: "Śląsk Wrocław" },
-      { id: "4", team1: "Cracovia", team2: "Piast Gliwice" },
-      { id: "5", team1: "Jagiellonia Białystok", team2: "Zagłębie Lubin" },
-      { id: "6", team1: "Widzew Łódź", team2: "Korona Kielce" },
-      { id: "7", team1: "Radomiak Radom", team2: "Ruch Chorzów" },
-      { id: "8", team1: "ŁKS Łódź", team2: "Stal Mielec" },
-      { id: "9", team1: "Wisła Kraków", team2: "Podbeskidzie" },
-    ];
+    let currentUser = null;
+    let currentQueue = 1;
 
-    const userEmail = localStorage.getItem("userEmail");
-    const matchList = document.getElementById("matchList");
+    const loginView = document.getElementById("login-view");
+    const registerView = document.getElementById("register-view");
+    const mainView = document.getElementById("main-view");
+    const queueSelect = document.getElementById("queue-select");
+    const matchList = document.getElementById("match-list");
 
-    function renderMatches(userId) {
-      matches.forEach(match => {
-        const div = document.createElement("div");
-        div.className = "match";
-        div.innerHTML = `
-          <strong>${match.team1} vs ${match.team2}</strong><br>
-          Twój typ:
-          <input type="number" min="0" id="${match.id}-team1">:
-          <input type="number" min="0" id="${match.id}-team2">
-          <button class="button" onclick="saveType('${match.id}', '${match.team1}', '${match.team2}', '${userId}')">Zapisz</button>
-        `;
-        matchList.appendChild(div);
-      });
+    function showLogin() {
+      loginView.classList.remove("hidden");
+      registerView.classList.add("hidden");
     }
 
-    window.saveType = async function (matchId, team1, team2, userId) {
-      const g1 = document.getElementById(`${matchId}-team1`).value;
-      const g2 = document.getElementById(`${matchId}-team2`).value;
-      const timestamp = new Date().toLocaleString();
-
-      await setDoc(doc(db, "typy", `${matchId}_${userId}`), {
-        matchId,
-        user: userEmail,
-        score: `${g1}:${g2}`,
-        team1,
-        team2,
-        time: timestamp
-      });
-      alert("Typ zapisany!");
-      loadAllTypes();
+    function showRegister() {
+      registerView.classList.remove("hidden");
+      loginView.classList.add("hidden");
     }
 
-    async function loadAllTypes() {
-      const q = query(collection(db, "typy"));
-      const querySnapshot = await getDocs(q);
-
-      const typyDiv = document.getElementById("typyGraczy");
-      typyDiv.innerHTML = "";
-
-      querySnapshot.forEach(doc => {
-        const data = doc.data();
-        typyDiv.innerHTML += `
-          <div><strong>${data.user}</strong> obstawił <em>${data.team1} vs ${data.team2}</em>: <strong>${data.score}</strong> <small>(${data.time})</small></div>
-        `;
-      });
+    function showMain() {
+      loginView.classList.add("hidden");
+      registerView.classList.add("hidden");
+      mainView.classList.remove("hidden");
     }
 
-    document.getElementById("logoutBtn").addEventListener("click", () => {
-      signOut(auth).then(() => {
-        localStorage.clear();
-        window.location.href = "login.html";
-      });
-    });
+    function login() {
+      const email = document.getElementById("login-email").value;
+      const password = document.getElementById("login-password").value;
+      auth.signInWithEmailAndPassword(email, password)
+        .then(() => location.reload())
+        .catch(error => alert(error.message));
+    }
 
-    onAuthStateChanged(auth, (user) => {
+    function register() {
+      const email = document.getElementById("register-email").value;
+      const password = document.getElementById("register-password").value;
+      const nickname = document.getElementById("register-nickname").value;
+      auth.createUserWithEmailAndPassword(email, password)
+        .then(cred => {
+          return db.collection("users").doc(cred.user.uid).set({ nickname });
+        })
+        .then(() => location.reload())
+        .catch(error => alert(error.message));
+    }
+
+    function logout() {
+      auth.signOut().then(() => location.reload());
+    }
+
+    auth.onAuthStateChanged(user => {
       if (user) {
-        renderMatches(user.uid);
-        loadAllTypes();
+        currentUser = user;
+        db.collection("users").doc(user.uid).get().then(doc => {
+          if (!doc.exists) logout(); // Brak nicku = błąd = wyloguj
+          else {
+            currentUser.nickname = doc.data().nickname;
+            initQueueSelect();
+            showMain();
+            renderMatches();
+          }
+        });
       } else {
-        window.location.href = "login.html";
+        showLogin();
       }
     });
+
+    function initQueueSelect() {
+      for (let i = 1; i <= 34; i++) {
+        const opt = document.createElement("option");
+        opt.value = i;
+        opt.textContent = `Kolejka ${i}`;
+        queueSelect.appendChild(opt);
+      }
+    }
+
+    function renderMatches() {
+      currentQueue = parseInt(queueSelect.value);
+      matchList.innerHTML = "";
+      db.collection("matches").where("kolejka", "==", currentQueue).get().then(snapshot => {
+        snapshot.forEach(doc => {
+          const match = doc.data();
+          const div = document.createElement("div");
+          div.className = "match";
+          div.innerHTML = `
+            <strong>${match.gospodarz} vs ${match.gosc}</strong><br>
+            <input type="number" id="g${doc.id}" placeholder="Gosp." min="0"> :
+            <input type="number" id="o${doc.id}" placeholder="Gość" min="0">
+            <button onclick="submitTip('${doc.id}')">Zapisz</button>
+            <div class="match-typers" id="typers-${doc.id}"></div>
+          `;
+          matchList.appendChild(div);
+
+          db.collection("typy").where("meczId", "==", doc.id).get().then(tsnap => {
+            const typersDiv = document.getElementById(`typers-${doc.id}`);
+            tsnap.forEach(tdoc => {
+              const t = tdoc.data();
+              const when = new Date(t.timestamp?.seconds * 1000).toLocaleString();
+              typersDiv.innerHTML += `<div><strong>${t.user}</strong>: ${t.gospodarz} : ${t.gosc} (${when})</div>`;
+            });
+          });
+        });
+      });
+    }
+
+    function submitTip(matchId) {
+      const g = document.getElementById(`g${matchId}`).value;
+      const o = document.getElementById(`o${matchId}`).value;
+      if (g === "" || o === "") return alert("Podaj wynik!");
+      db.collection("typy").add({
+        meczId: matchId,
+        user: currentUser.nickname,
+        gospodarz: parseInt(g),
+        gosc: parseInt(o),
+        timestamp: firebase.firestore.FieldValue.serverTimestamp()
+      }).then(() => renderMatches());
+    }
   </script></body>
 </html>
