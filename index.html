@@ -1,115 +1,208 @@
-<!DOCTYPE html><html lang="pl">
+<!DOCTYPE html>
+<html lang="pl">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>FF-Typer</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>FF-Typer Ekstraklasa 2025/26</title>
   <style>
-    body {
-      font-family: Arial, sans-serif;
-      background-color: #f2f2f2;
-      margin: 0;
-      padding: 0;
-      color: #333;
-    }
-    header {
-      background-color: #1e88e5;
-      color: white;
-      padding: 20px;
-      text-align: center;
-    }
-    .container {
-      max-width: 800px;
-      margin: 30px auto;
-      background: white;
-      padding: 20px;
-      border-radius: 10px;
-      box-shadow: 0 0 10px rgba(0,0,0,0.1);
-    }
-    input, button {
-      padding: 10px;
-      margin: 5px 0;
-      width: 100%;
-      box-sizing: border-box;
-    }
-    table {
-      width: 100%;
-      border-collapse: collapse;
-    }
-    th, td {
-      padding: 10px;
-      border: 1px solid #ccc;
-      text-align: center;
-    }
-    .match-input {
-      display: flex;
-      gap: 10px;
-    }
-    .match-input input {
-      width: 40px;
-    }
-    .logout {
-      background: #e53935;
-      color: white;
-      border: none;
-      margin-top: 10px;
-    }
+    body { font-family: Arial, sans-serif; margin: 0; background: #f5f5f5; color: #222; }
+    header { background: #0066cc; color: #fff; padding: 1rem; text-align: center; }
+    main { max-width: 800px; margin: 1rem auto; padding: 1rem; background: #fff; border-radius: 8px; }
+    .btn { padding: 8px 16px; background: #0066cc; color: #fff; border: none; cursor: pointer; margin: 5px; }
+    .btn[disabled] { opacity: 0.5; cursor: default; }
+    .hidden { display: none; }
+    .match { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid #ddd; }
+    .match div { flex: 1; text-align: center; }
+    .match input { width: 40px; }
+    table { width: 100%; border-collapse: collapse; margin-top: 1rem; }
+    th, td { padding: 8px; border: 1px solid #ccc; text-align: center; }
+    th { background: #eee; }
   </style>
 </head>
 <body>
-  <header>
-    <h1>FF-Typer – Ekstraklasa 2025/26</h1>
-  </header>  <div class="container" id="auth-section">
-    <h2>Rejestracja / Logowanie</h2>
-    <input type="email" id="email" placeholder="Email">
-    <input type="password" id="password" placeholder="Hasło">
-    <button id="register">Zarejestruj się</button>
-    <button id="login">Zaloguj się</button>
-    <button id="logout" class="logout" style="display:none;">Wyloguj się</button>
-  </div>  <div class="container" id="main-section" style="display: none;">
-    <h2>Typuj wyniki – 1. kolejka</h2>
+
+<header><h1>FF-Typer • Ekstraklasa 2025/26</h1></header>
+
+<main>
+
+  <!-- Rejestracja -->
+  <div id="register-screen">
+    <h2>Zarejestruj się</h2>
+    <input type="email" id="reg-email" placeholder="Email"><br>
+    <input type="password" id="reg-pass" placeholder="Hasło"><br>
+    <button class="btn" onclick="register()">Zarejestruj</button>
+    <p>Masz konto? <button class="btn" onclick="show('login-screen')">Zaloguj się</button></p>
+  </div>
+
+  <!-- Logowanie -->
+  <div id="login-screen" class="hidden">
+    <h2>Zaloguj się</h2>
+    <input type="email" id="log-email" placeholder="Email"><br>
+    <input type="password" id="log-pass" placeholder="Hasło"><br>
+    <button class="btn" onclick="login()">Zaloguj</button>
+    <p>Nie masz konta? <button class="btn" onclick="show('register-screen')">Zarejestruj się</button></p>
+  </div>
+
+  <!-- Główna strona -->
+  <div id="main-screen" class="hidden">
+    <div>
+      <button class="btn" onclick="logout()">Wyloguj</button>
+      <span id="user-info"></span>
+    </div>
+
+    <div class="buttons">
+      <button class="btn" id="prev" onclick="changeRound(-1)">← Poprzednia</button>
+      <span>Kolejka <span id="round-num">1</span> / 34</span>
+      <button class="btn" id="next" onclick="changeRound(+1)">Następna →</button>
+    </div>
+
     <div id="matches"></div>
-    <button id="submit-predictions">Zapisz typy</button>
-  </div>  <div class="container" id="all-predictions">
-    <h2>Wszystkie obstawione mecze</h2>
-    <p>Wczytywanie danych...</p>
-  </div>  <script type="module">
-    import { initializeApp } from 'https://www.gstatic.com/firebasejs/12.0.0/firebase-app.js';
-    import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/12.0.0/firebase-auth.js';
-    import { getFirestore, collection, addDoc, getDocs, serverTimestamp } from 'https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js';
+    <button class="btn" onclick="submitAll()">Zapisz wszystkie typy</button>
 
-    const firebaseConfig = {
-      apiKey: "YOUR_API_KEY_HERE",
-      authDomain: "ff-typer.firebaseapp.com",
-      projectId: "ff-typer",
-      storageBucket: "ff-typer.appspot.com",
-      messagingSenderId: "22978913956",
-      appId: "1:22978913956:web:6e6113180e48142d952831",
-      measurementId: "G-2BFZY3PWFZ"
-    };
+    <div id="all-predictions">
+      <h2>Wszystkie obstawione mecze</h2>
+      <p>Wczytywanie danych...</p>
+    </div>
+  </div>
 
-    const app = initializeApp(firebaseConfig);
-    const auth = getAuth(app);
-    const db = getFirestore(app);
+</main>
 
-    const matchesList = [
-      "Legia Warszawa – Lech Poznań",
-      "Pogoń Szczecin – Raków Częstochowa",
-      "Zagłębie Lubin – Śląsk Wrocław",
-      "Cracovia – Widzew Łódź",
-      "Korona Kielce – Górnik Zabrze",
-      "Jagiellonia – Piast Gliwice",
-      "Radomiak – Stal Mielec",
-      "ŁKS Łódź – Ruch Chorzów"
-    ];
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-app.js";
+  import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-auth.js";
+  import { getFirestore, collection, addDoc, getDocs, serverTimestamp, query, orderBy } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
 
-    const email = document.getElementById('email');
-    const password = document.getElementById('password');
-    const registerBtn = document.getElementById('register');
-    const loginBtn = document.getElementById('login');
-    const logoutBtn = document.getElementById('logout');
-    const authSection = document.getElementById('auth-section');
-    const mainSection = document.getElementById('main-section');
+  const firebaseConfig = {
+    apiKey: "YOUR_KEY",
+    authDomain: "ff-typer.firebaseapp.com",
+    projectId: "ff-typer",
+    storageBucket: "ff-typer.appspot.com",
+    messagingSenderId: "22978913956",
+    appId: "1:22978913956:web:XXXX",
+    measurementId: "G-XXXX"
+  };
 
-    registerBtn.onclick = () => {
-      createUserWithEmailAndPassword(auth, email.value, password.value)
-        .then(() => alert
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const db = getFirestore(app);
+
+  const matchesByRound = {
+    1: [
+      {home:"Legia Warszawa",away:"Lech Poznań",date:"19.07.2025 20:30"},
+      {home:"Pogoń Szczecin",away:"Raków Częstochowa",date:"18.07.2025 18:00"},
+      {home:"Zagłębie Lubin",away:"Śląsk Wrocław",date:"18.07.2025 20:30"},
+      {home:"Cracovia",away:"Widzew Łódź",date:"19.07.2025 14:45"},
+      {home:"Korona Kielce",away:"Górnik Zabrze",date:"19.07.2025 17:30"},
+      {home:"Jagiellonia",away:"Piast Gliwice",date:"19.07.2025 20:15"},
+      {home:"Radomiak Radom",away:"Stal Mielec",date:"20.07.2025 14:45"},
+      {home:"ŁKS Łódź",away:"Ruch Chorzów",date:"20.07.2025 17:30"},
+      {home:"Arka Gdynia",away:"Lechia Gdańsk",date:"20.07.2025 20:15"},
+    ],
+    2: [
+      {home:"Arka Gdynia",away:"Radomiak Radom",date:"26.07.2025 17:30"},
+      {home:"Lechia Gdańsk",away:"Lech Poznań",date:"26.07.2025 20:30"},
+      {home:"Pogoń Szczecin",away:"Motor Lublin",date:"26.07.2025 17:30"},
+      {home:"Korona Kielce",away:"Legia Warszawa",date:"27.07.2025 20:15"},
+      {home:"Cracovia",away:"Bruk-Bet Termalica",date:"27.07.2025 19:00"},
+      {home:"GKS Katowice",away:"Zagłębie Lubin",date:"25.07.2025 18:00"},
+      {home:"Raków Częstochowa",away:"Wisła Płock",date:"25.07.2025 20:15"},
+      {home:"Jagiellonia",away:"Widzew Łódź",date:"27.07.2025 17:30"},
+      {home:"Piast Gliwice",away:"Górnik Zabrze",date:"27.07.2025 14:45"},
+    ],
+    // … dodaj kolejne do 34
+  };
+
+  let current = 1;
+
+  function show(id) {
+    document.querySelectorAll('#register-screen,#login-screen,#main-screen').forEach(e => e.classList.add('hidden'));
+    document.getElementById(id).classList.remove('hidden');
+  }
+
+  function register(){
+    createUserWithEmailAndPassword(auth, regEmail.value, regPass.value)
+      .then(() => show('login-screen')).catch(e=>alert(e.message));
+  }
+
+  function login(){
+    signInWithEmailAndPassword(auth, logEmail.value, logPass.value)
+      .catch(e=>alert(e.message));
+  }
+
+  function logout(){
+    signOut(auth);
+  }
+
+  onAuthStateChanged(auth, user => {
+    if(user) {
+      show('main-screen');
+      userInfo.textContent = user.email;
+      renderRound();
+      loadAll();
+    } else show('register-screen');
+  });
+
+  function changeRound(dir){
+    current += dir;
+    if(current<1) current=1;
+    if(current>34) current=34;
+    renderRound();
+  }
+
+  function renderRound(){
+    roundNum.textContent = current;
+    prev.disabled = current===1;
+    next.disabled = current===34;
+    matches.innerHTML = '';
+    (matchesByRound[current]||[]).forEach((m,i)=>{
+      const div = document.createElement('div');
+      div.className='match';
+      div.innerHTML = `
+        <div>${m.home}–${m.away}<br><small>${m.date}</small></div>
+        <div><input id="h${i}" type="number" min="0"></div>
+        <div><input id="a${i}" type="number" min="0"></div>
+      `;
+      matches.appendChild(div);
+    });
+  }
+
+  async function submitAll(){
+    const user = auth.currentUser; if(!user) return;
+    const arr = matchesByRound[current]||[];
+    for(let i=0;i<arr.length;i++){
+      const h = document.getElementById(`h${i}`).value;
+      const a = document.getElementById(`a${i}`).value;
+      if(h==='') continue;
+      await addDoc(collection(db,'predictions'), {
+        user:user.email,round:current,
+        home:arr[i].home,away:arr[i].away,
+        homeScore:parseInt(h),awayScore:parseInt(a),
+        timestamp: serverTimestamp()
+      });
+    }
+    alert('Typy zapisane!');
+    loadAll();
+  }
+
+  async function loadAll(){
+    const q = query(collection(db,'predictions'), orderBy('timestamp','desc'));
+    const snap = await getDocs(q);
+    if(snap.empty){
+      allPredictions.innerHTML = '<h2>Wszystkie obstawione mecze</h2><p>Brak typów</p>';
+    } else {
+      let html = `<h2>Wszystkie obstawione mecze</h2><table><thead><tr><th>Kolejka</th><th>User</th><th>Mecz</th><th>Twój typ</th><th>Czas</th></tr></thead><tbody>`;
+      snap.forEach(doc=>{
+        const d=doc.data();
+        const dt = d.timestamp?.seconds
+          ? new Date(d.timestamp.seconds*1000).toLocaleString('pl-PL')
+          : '';
+        html+=`<tr><td>${d.round}</td><td>${d.user}</td><td>${d.home}–${d.away}</td><td>${d.homeScore}:${d.awayScore}</td><td>${dt}</td></tr>`;
+      });
+      html+='</tbody></table>';
+      allPredictions.innerHTML = html;
+    }
+  }
+
+</script>
+</body>
+</html>
