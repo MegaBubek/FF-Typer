@@ -1,165 +1,162 @@
 <!DOCTYPE html>
 <html lang="pl">
-<head>
-  <meta charset="UTF-8" /><meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>FF-Typer</title>
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>FF-Typer Ekstraklasa 25/26</title>
   <style>
-    body { font-family: Arial, sans-serif; background:#f2f2f2; margin:0; padding:20px;}
-    .screen { display:none; max-width:800px; margin:auto; background:#fff; padding:20px; border-radius:8px; box-shadow:0 2px 6px rgba(0,0,0,0.1); }
+    body { font-family: Arial, sans-serif; background:#f0f0f0; margin:0; padding:20px; }
+    .screen { display:none; max-width:600px; background:#fff; margin:auto; margin-top:30px; padding:20px; border-radius:8px; box-shadow:0 2px 6px rgba(0,0,0,0.1); }
     .active { display:block; }
-    input, button, select { width:100%; padding:10px; margin:6px 0; border-radius:4px; border:1px solid #ccc; }
+    input, select, button { width:100%; padding:10px; margin:8px 0; border-radius:5px; border:1px solid #ccc; }
     button { background:#007bff; color:#fff; cursor:pointer; }
-    table { width:100%; border-collapse:collapse; }
-    th, td { border:1px solid #ccc; padding:8px; text-align:center; }
+    table { width:100%; border-collapse:collapse; margin-top:20px; }
+    th, td { border:1px solid #ccc; padding:8px; font-size:14px; text-align:center; }
     th { background:#eee; }
   </style>
 </head>
 <body>
 
 <!-- REJESTRACJA -->
-<div id="register-screen" class="screen active">
+<div id="registerScreen" class="screen active">
   <h2>Rejestracja</h2>
-  <input id="reg-nick" placeholder="Nick" />
-  <input id="reg-email" type="email" placeholder="Email" />
-  <input id="reg-pass" type="password" placeholder="Hasło" />
+  <input id="regNick" placeholder="Nick" />
+  <input id="regEmail" type="email" placeholder="Email" />
+  <input id="regPass" type="password" placeholder="Hasło" />
   <button onclick="register()">Zarejestruj się</button>
-  <p>Masz już konto? <a href="#" onclick="show('login-screen')">Zaloguj się</a></p>
+  <p><a href="#" onclick="showScreen('loginScreen')">Masz konto? Zaloguj się</a></p>
 </div>
 
 <!-- LOGOWANIE -->
-<div id="login-screen" class="screen">
+<div id="loginScreen" class="screen">
   <h2>Logowanie</h2>
-  <input id="log-email" type="email" placeholder="Email" />
-  <input id="log-pass" type="password" placeholder="Hasło" />
+  <input id="logEmail" type="email" placeholder="Email" />
+  <input id="logPass" type="password" placeholder="Hasło" />
   <button onclick="login()">Zaloguj się</button>
-  <p>Nowy? <a href="#" onclick="show('register-screen')">Zarejestruj się</a></p>
+  <p><a href="#" onclick="showScreen('registerScreen')">Nie masz konta? Zarejestruj się</a></p>
 </div>
 
 <!-- STRONA GŁÓWNA -->
-<div id="main-screen" class="screen">
+<div id="mainScreen" class="screen">
   <h2>Witaj, <span id="userNick"></span>!</h2>
-  <label>Kolejka:&nbsp;
-    <select id="roundSelect" onchange="renderMatches()"></select>
+  <label>
+    Wybierz kolejkę:
+    <select id="roundSelect"></select>
   </label>
   <div id="matches"></div>
   <button onclick="savePredictions()">Zapisz typy</button>
-  <h2>Obstawienia</h2>
-  <div id="all-predictions">Ładowanie...</div>
+  <div id="adminPanel">
+    <h3>Obstawione meczów (tylko Ty - admin)</h3>
+    <div id="allPredictions">Wczytywanie...</div>
+  </div>
   <button onclick="logout()">Wyloguj się</button>
 </div>
 
 <script type="module">
-// === FIREBASE ===
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-app.js";
 import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-auth.js";
-import { getFirestore, collection, addDoc, getDocs, serverTimestamp, query, orderBy } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
+import { getFirestore, collection, addDoc, getDocs, serverTimestamp, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
 
-const cfg = {
-  apiKey:"AIzaSyDIhMW94ZY7_7w8yttJSHAwmCPR3bSTsHw",
-  authDomain:"ff-typer.firebaseapp.com", projectId:"ff-typer",
-  storageBucket:"ff-typer.appspot.com", messagingSenderId:"22978913956",
-  appId:"1:22978913956:web:6e6113180e48142d952831"
+// ✅ Wklej swój firebaseConfig stąd:
+const firebaseConfig = {
+  apiKey: "AIzaSyDIhMW94ZY7_7w8yttJSHAwmCPR3bSTsHw",
+  authDomain: "ff-typer.firebaseapp.com",
+  projectId: "ff-typer",
+  storageBucket: "ff-typer.appspot.com",
+  messagingSenderId: "22978913956",
+  appId: "1:22978913956:web:6e6113180e48142d952831"
 };
-const app = initializeApp(cfg), auth = getAuth(app), db = getFirestore(app);
 
-// === TERMINARZ KOLEJEK 1-3 ===
-const schedules = {
-  1:[["Legia","Lech"],["Raków","Górnik"],["Lechia","Pogoń"]],
-  2:[["Lech","Raków"],["Górnik","Legia"],["Pogoń","Lechia"]],
-  3:[["Raków","Pogoń"],["Legia","Lechia"],["Lech","Górnik"]]
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+
+const schedule = {
+  1: ["Jagiellonia Białystok - Bruk-Bet Termalica Nieciecza","Lech Poznań - Cracovia","Widzew Łódź - Zagłębie Lubin"],
+  2: ["Arka Gdynia - Radomiak Radom","Lechia Gdańsk - Lech Poznań","Pogoń Szczecin - Motor Lublin"],
+  3: ["Wisła Płock - Piast Gliwice","Bruk-Bet Termalica - Pogoń Szczecin","Legia Warszawa - Arka Gdynia"]
 };
-const roundSel = document.getElementById("roundSelect");
-Object.keys(schedules).forEach(r=>{
-  let opt = document.createElement("option");
-  opt.value=opt.text=`Kolejka ${r}`;
-  roundSel.append(opt);
+
+const nickEl = document.getElementById("userNick");
+const roundSelect = document.getElementById("roundSelect");
+
+Object.keys(schedule).forEach(r=>{
+  let o=document.createElement("option");
+  o.value=r; o.text="Kolejka "+r;
+  roundSelect.append(o);
 });
 
-// === przełączanie ekranów ===
-function show(id){
+function showScreen(id){
   document.querySelectorAll(".screen").forEach(s=>s.classList.remove("active"));
   document.getElementById(id).classList.add("active");
 }
 
-// === REJESTRACJA ===
 async function register(){
-  let nick=reg-nick.value.trim(), em=reg-email.value, pw=reg-pass.value;
-  if(!nick||!em||!pw){alert("Wypełnij..."); return;}
   try{
-    await createUserWithEmailAndPassword(auth,em,pw);
-    localStorage.setItem("nick", nick);
-    alert("Zarejestrowano!");
-    show("main-screen");
-  } catch(e){ alert(e.message); }
+    await createUserWithEmailAndPassword(auth, regEmail.value, regPass.value);
+    const user = auth.currentUser;
+    await setDoc(doc(db,"users",user.uid),{nick:regNick.value});
+  }catch(e){ alert(e.message); }
 }
 
-// === LOGOWANIE ===
 async function login(){
-  try{ await signInWithEmailAndPassword(auth, log-email.value, log-pass.value); }
+  try{ await signInWithEmailAndPassword(auth, logEmail.value, logPass.value); }
   catch(e){ alert(e.message); }
 }
 
-// === WYLOGOWANIE ===
 function logout(){
   signOut(auth);
-  show("login-screen");
 }
 
-// === po zmianie stanu Auth ===
-onAuthStateChanged(auth, u=>{
-  if(u){
-    userNick.textContent = localStorage.getItem("nick") || u.email;
-    renderMatches(); loadAll();
-    show("main-screen");
-  } else show("login-screen");
+function renderMatches(){
+  const sel = roundSelect.value;
+  const mDiv = document.getElementById("matches");
+  mDiv.innerHTML = "";
+  schedule[sel].forEach((m,i)=>{
+    mDiv.innerHTML+=`
+      <div class="match">
+        <strong>${m}</strong><br>
+        <input placeholder="np. 2:1" id="t${i}"/>
+      </div>`;
+  });
+}
+
+async function savePredictions(){
+  const uid = auth.currentUser.uid;
+  const rnd = roundSelect.value;
+  const data = {round:rnd, timestamp:serverTimestamp()};
+  schedule[rnd].forEach((_,i)=>{
+    const v = document.getElementById("t"+i).value;
+    if(v) data["m"+i]=v;
+  });
+  await addDoc(collection(db,"predictions"),{uid, ...data});
+  alert("Zapisano!");
+  loadAdmin();
+}
+
+async function loadAdmin(){
+  const ap = document.getElementById("allPredictions");
+  ap.innerHTML = "";
+  const snap = await getDocs(collection(db,"predictions"));
+  for(const d of snap.docs){
+    const u = await getDoc(doc(db,"users",d.data().uid));
+    const nick = u.exists()?u.data().nick:"?";
+    const dat = d.data();
+    let html = `<p><strong>${nick}</strong> - kolejka ${dat.round}<br>`;
+    Object.keys(dat).filter(k=>k.startsWith("m")).forEach(k=> html+=dat[k]+"<br>");
+    html+=`<em>${new Date(dat.timestamp.seconds*1000).toLocaleString()}</em></p>`;
+    if(localStorage.getItem("nick")==="admin") ap.innerHTML+=html;
+  }
+}
+
+onAuthStateChanged(auth,user=>{
+  if(user){
+    showScreen("mainScreen");
+    doc(db,"users",user.uid).get().then(u=>nickEl.textContent=u.data().nick);
+    renderMatches();
+    loadAdmin();
+  } else showScreen("registerScreen");
 });
 
-// === RYSOWANIE MECZÓW ===
-function renderMatches(){
-  let r = parseInt(roundSel.value.replace("Kolejka ",""));
-  let html="";
-  schedules[r].forEach((m,i)=>{
-    html+=`<div>${m[0]} vs ${m[1]} &nbsp;
-      <input id="h${i}" type="number" min="0" placeholder="G:"> :
-      <input id="a${i}" type="number" min="0" placeholder="G:">
-    </div>`;
-  });
-  matches.innerHTML = html;
-}
-
-// === ZAPIS TYPÓW ===
-async function savePredictions(){
-  let u = auth.currentUser;
-  if(!u){alert("Zaloguj się."); return;}
-  let r = parseInt(roundSel.value.replace("Kolejka ",""));
-  for(let i=0;i<schedules[r].length;i++){
-    let h = document.getElementById("h"+i).value;
-    let a = document.getElementById("a"+i).value;
-    if(!h||!a) continue;
-    await addDoc(collection(db,"predictions"), {
-      nick: localStorage.getItem("nick"), round: r,
-      match: schedules[r][i][0]+" vs "+schedules[r][i][1],
-      home: parseInt(h), away: parseInt(a),
-      timestamp: serverTimestamp()
-    });
-  }
-  alert("Zapisano!");
-  loadAll();
-}
-
-// === WYŚWIETLANIE WSZYSTKICH TYPÓW (tylko admin widzi wszystko) ===
-async function loadAll(){
-  const snap = await getDocs(query(collection(db,"predictions"),orderBy("timestamp","desc")));
-  let html="<table><tr><th>Nick</th><th>Kolejka</th><th>Mecz</th><th>Typ</th><th>Data</th></tr>";
-  snap.forEach(d=>{
-    let dt = d.data(), date = dt.timestamp?.seconds ? new Date(dt.timestamp.seconds*1000).toLocaleString("pl-PL") : "";
-    if(localStorage.getItem("nick") === "admin"){
-      html+="<tr><td>"+dt.nick+"</td><td>"+dt.round+"</td><td>"+dt.match+"</td><td>"+dt.home+":"+dt.away+"</td><td>"+date+"</td></tr>";
-    }
-  });
-  html+="</table>";
-  all-predictions.innerHTML = html;
-}
+roundSelect.onchange=renderMatches;
 </script>
 </body>
 </html>
