@@ -1,202 +1,184 @@
-<!DOCTYPE html>
-<html lang="pl">
+<!DOCTYPE html><html lang="pl">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>FF-Typer</title>
   <style>
     body {
-      font-family: sans-serif;
-      background-color: #f9f9f9;
-      color: #222;
       margin: 0;
-      padding: 0 20px;
+      padding: 0;
+      font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(to bottom, #1f1f1f, #2c3e50);
+      color: #fff;
+      min-height: 100vh;
     }
-    h1, h2 {
-      color: #333;
+    header {
+      background-color: #222;
+      padding: 20px;
+      text-align: center;
+      font-size: 2rem;
+      font-weight: bold;
+      border-bottom: 2px solid #444;
     }
-    input, button {
-      padding: 8px;
+    main {
+      padding: 20px;
+      max-width: 800px;
+      margin: 0 auto;
+    }
+    input, button, select {
+      padding: 10px;
       margin: 5px 0;
+      width: 100%;
+      border-radius: 8px;
+      border: none;
+      font-size: 1rem;
+    }
+    button {
+      background-color: #3498db;
+      color: white;
+      cursor: pointer;
+      transition: background-color 0.3s;
+    }
+    button:hover {
+      background-color: #2980b9;
     }
     table {
       width: 100%;
       border-collapse: collapse;
-      margin-top: 15px;
+      margin-top: 20px;
+      background-color: #333;
     }
     th, td {
       padding: 10px;
-      border: 1px solid #ccc;
+      border: 1px solid #555;
+      text-align: center;
     }
-    #typer, #auth-section, #all-predictions {
-      margin: 30px 0;
+    th {
+      background-color: #444;
     }
-    .hidden {
-      display: none;
+    .card {
+      background-color: #2a2a2a;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+      margin-bottom: 20px;
+    }
+    h2 {
+      margin-top: 0;
     }
   </style>
 </head>
 <body>
-  <h1>FF-Typer</h1>
+  <header>FF-Typer</header>
+  <main>
+    <div class="card">
+      <h2>Logowanie / Rejestracja</h2>
+      <input type="email" id="email" placeholder="Email">
+      <input type="password" id="password" placeholder="Hasło">
+      <button onclick="register()">Zarejestruj się</button>
+      <button onclick="login()">Zaloguj się</button>
+      <p id="user-info"></p>
+    </div><div class="card" id="prediction-section" style="display:none;">
+  <h2>Typuj mecz</h2>
+  <select id="match">
+    <option value="Lech - Legia">Lech - Legia</option>
+    <option value="Raków - Widzew">Raków - Widzew</option>
+    <option value="Pogoń - Jagiellonia">Pogoń - Jagiellonia</option>
+  </select>
+  <input type="number" id="home" placeholder="Gospodarze">
+  <input type="number" id="away" placeholder="Goście">
+  <button onclick="submitPrediction()">Zatwierdź</button>
+</div>
 
-  <!-- Sekcja logowania i rejestracji -->
-  <div id="auth-section">
-    <div id="user-info" class="hidden">
-      <p>Zalogowano jako: <span id="user-email"></span></p>
-      <button id="logout-btn">Wyloguj się</button>
-    </div>
-    <div id="auth-forms">
-      <input type="email" id="email" placeholder="Email" /><br />
-      <input type="password" id="password" placeholder="Hasło" /><br />
-      <button id="register-btn">Zarejestruj się</button>
-      <button id="login-btn">Zaloguj się</button>
-    </div>
-  </div>
+<div class="card" id="all-predictions">
+  <h2>Wszystkie obstawione mecze</h2>
+  <p>Wczytywanie danych...</p>
+</div>
 
-  <!-- Sekcja typowania -->
-  <div id="typer" class="hidden">
-    <h2>Typuj 1. kolejkę Ekstraklasy</h2>
-    <form id="prediction-form">
-      <label>Lech vs Legia:</label><br />
-      <input type="number" min="0" id="homeScore" required /> :
-      <input type="number" min="0" id="awayScore" required />
-      <input type="hidden" id="matchId" value="Lech vs Legia" />
-      <br />
-      <button type="submit">Zapisz typ</button>
-    </form>
-  </div>
-
-  <!-- Sekcja pokazująca wszystkie typy -->
-  <div id="all-predictions">
-    <h2>Wszystkie obstawione mecze</h2>
-    <p>Wczytywanie danych...</p>
-  </div>
-
-  <!-- Firebase SDK -->
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-app.js";
-    import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-auth.js";
-    import { getFirestore, collection, addDoc, getDocs, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
-
+  </main>  <!-- FIREBASE SDK -->  <script src="https://www.gstatic.com/firebasejs/12.0.0/firebase-app.js"></script>  <script src="https://www.gstatic.com/firebasejs/12.0.0/firebase-auth.js"></script>  <script src="https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js"></script>  <script>
     const firebaseConfig = {
       apiKey: "AIzaSyDIhMW94ZY7_7w8yttJSHAwmCPR3bSTsHw",
       authDomain: "ff-typer.firebaseapp.com",
       projectId: "ff-typer",
       storageBucket: "ff-typer.appspot.com",
       messagingSenderId: "22978913956",
-      appId: "1:22978913956:web:6e6113180e48142d952831",
-      measurementId: "G-2BFZY3PWFZ"
+      appId: "1:22978913956:web:6e6113180e48142d952831"
     };
 
-    const app = initializeApp(firebaseConfig);
-    const auth = getAuth(app);
-    const db = getFirestore(app);
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db = firebase.firestore();
 
-    // Rejestracja
-    document.getElementById("register-btn").addEventListener("click", async () => {
+    function register() {
       const email = document.getElementById("email").value;
       const password = document.getElementById("password").value;
-      try {
-        await createUserWithEmailAndPassword(auth, email, password);
-      } catch (e) {
-        alert("Błąd rejestracji: " + e.message);
-      }
-    });
-
-    // Logowanie
-    document.getElementById("login-btn").addEventListener("click", async () => {
-      const email = document.getElementById("email").value;
-      const password = document.getElementById("password").value;
-      try {
-        await signInWithEmailAndPassword(auth, email, password);
-      } catch (e) {
-        alert("Błąd logowania: " + e.message);
-      }
-    });
-
-    // Wylogowanie
-    document.getElementById("logout-btn").addEventListener("click", async () => {
-      await signOut(auth);
-    });
-
-    // Obsługa stanu użytkownika
-    onAuthStateChanged(auth, (user) => {
-      const userInfo = document.getElementById("user-info");
-      const authForms = document.getElementById("auth-forms");
-      const typer = document.getElementById("typer");
-      if (user) {
-        document.getElementById("user-email").textContent = user.email;
-        userInfo.classList.remove("hidden");
-        authForms.classList.add("hidden");
-        typer.classList.remove("hidden");
-      } else {
-        userInfo.classList.add("hidden");
-        authForms.classList.remove("hidden");
-        typer.classList.add("hidden");
-      }
-    });
-
-    // Zapisywanie typu
-    document.getElementById("prediction-form").addEventListener("submit", async (e) => {
-      e.preventDefault();
-      const user = auth.currentUser;
-      if (!user) return;
-
-      const matchId = document.getElementById("matchId").value;
-      const homeScore = document.getElementById("homeScore").value;
-      const awayScore = document.getElementById("awayScore").value;
-
-      await addDoc(collection(db, "predictions"), {
-        user: user.email,
-        matchId,
-        homeScore,
-        awayScore,
-        timestamp: serverTimestamp()
-      });
-
-      alert("Zapisano Twój typ!");
-      loadAllPredictions(); // Odśwież listę
-    });
-
-    // Wyświetlanie wszystkich typów
-    async function loadAllPredictions() {
-      const querySnapshot = await getDocs(collection(db, "predictions"));
-      const container = document.getElementById("all-predictions");
-
-      let html = `
-        <table>
-          <thead>
-            <tr>
-              <th>Użytkownik</th>
-              <th>Mecz</th>
-              <th>Typ</th>
-              <th>Data</th>
-            </tr>
-          </thead>
-          <tbody>
-      `;
-
-      querySnapshot.forEach((doc) => {
-        const data = doc.data();
-        const date = data.timestamp?.seconds
-          ? new Date(data.timestamp.seconds * 1000).toLocaleString("pl-PL")
-          : "-";
-
-        html += `
-          <tr>
-            <td>${data.user}</td>
-            <td>${data.matchId}</td>
-            <td>${data.homeScore}:${data.awayScore}</td>
-            <td>${date}</td>
-          </tr>
-        `;
-      });
-
-      html += "</tbody></table>";
-      container.innerHTML = "<h2>Wszystkie obstawione mecze</h2>" + (querySnapshot.empty ? "<p>Brak obstawień.</p>" : html);
+      auth.createUserWithEmailAndPassword(email, password)
+        .then(() => alert("Zarejestrowano!"))
+        .catch(e => alert(e.message));
     }
 
-    loadAllPredictions();
-  </script>
-</body>
+    function login() {
+      const email = document.getElementById("email").value;
+      const password = document.getElementById("password").value;
+      auth.signInWithEmailAndPassword(email, password)
+        .then(user => {
+          document.getElementById("user-info").innerText = `Zalogowano jako ${user.user.email}`;
+          document.getElementById("prediction-section").style.display = "block";
+        })
+        .catch(e => alert(e.message));
+    }
+
+    function submitPrediction() {
+      const match = document.getElementById("match").value;
+      const home = document.getElementById("home").value;
+      const away = document.getElementById("away").value;
+      const user = auth.currentUser?.email || "anonim";
+
+      db.collection("predictions").add({
+        matchId: match,
+        homeScore: home,
+        awayScore: away,
+        user,
+        timestamp: firebase.firestore.FieldValue.serverTimestamp()
+      }).then(() => {
+        alert("Zapisano typ!");
+        loadAllPredictions();
+      });
+    }
+
+    function loadAllPredictions() {
+      db.collection("predictions").orderBy("timestamp", "desc").get().then(querySnapshot => {
+        const container = document.getElementById("all-predictions");
+        let html = `
+          <table>
+            <thead>
+              <tr><th>Użytkownik</th><th>Mecz</th><th>Typ</th><th>Data</th></tr>
+            </thead>
+            <tbody>
+        `;
+        querySnapshot.forEach(doc => {
+          const data = doc.data();
+          const date = data.timestamp?.toDate().toLocaleString("pl-PL") || "-";
+          html += `
+            <tr>
+              <td>${data.user}</td>
+              <td>${data.matchId}</td>
+              <td>${data.homeScore}:${data.awayScore}</td>
+              <td>${date}</td>
+            </tr>
+          `;
+        });
+        html += "</tbody></table>";
+        container.innerHTML = `<h2>Wszystkie obstawione mecze</h2>${html}`;
+      });
+    }
+
+    auth.onAuthStateChanged(user => {
+      if (user) {
+        document.getElementById("user-info").innerText = `Zalogowano jako ${user.email}`;
+        document.getElementById("prediction-section").style.display = "block";
+      }
+      loadAllPredictions();
+    });
+  </script></body>
 </html>
