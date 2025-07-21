@@ -126,4 +126,59 @@ th {
         return;
       }
       const matchId = document.getElementById("matchId").value;
-      const home
+      const homeScore = document.getElementById("homeScore").value;
+      const awayScore = document.getElementById("awayScore").value;
+      await addDoc(collection(db, "predictions"), {
+        user: currentUser.email,
+        matchId,
+        homeScore,
+        awayScore,
+        timestamp: serverTimestamp()
+      });
+      alert("Zapisano typ!");
+      loadAllPredictions();
+    }
+
+    async function loadAllPredictions() {
+      const querySnapshot = await getDocs(collection(db, "predictions"));
+      const container = document.getElementById("all-predictions");
+
+      let html = `
+        <table>
+          <thead>
+            <tr>
+              <th>Użytkownik</th>
+              <th>Mecz</th>
+              <th>Typ</th>
+              <th>Data</th>
+            </tr>
+          </thead>
+          <tbody>
+      `;
+
+      querySnapshot.forEach((doc) => {
+        const data = doc.data();
+        const date = data.timestamp?.seconds
+          ? new Date(data.timestamp.seconds * 1000).toLocaleString("pl-PL")
+          : "-";
+
+        html += `
+          <tr>
+            <td>${data.user || "?"}</td>
+            <td>${data.matchId || "?"}</td>
+            <td>${data.homeScore}:${data.awayScore}</td>
+            <td>${date}</td>
+          </tr>
+        `;
+      });
+
+      html += `</tbody></table>`;
+      container.innerHTML = `
+        <h2>Wszystkie obstawione mecze</h2>
+        ${querySnapshot.empty ? "<p>Brak obstawień.</p>" : html}
+      `;
+    }
+
+    loadAllPredictions();
+  </script></body>
+</html>
