@@ -1,123 +1,32 @@
-<!DOCTYPE html><html lang="pl"><head>
+<!DOCTYPE html>
+<html lang="pl">
+<head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Football Fans Typer</title>
-  <style>
-    body {
-      margin: 0;
-      font-family: Arial, sans-serif;
-      background-color: #111;
-      color: white;
-    }
-    header {
-      background-color: #b30000;
-      padding: 10px;
-      text-align: center;
-      font-size: 24px;
-    }
-    .screen {
-      display: none;
-      padding: 20px;
-    }
-    .active {
-      display: block;
-    }
-    .match {
-      margin: 10px 0;
-      padding: 10px;
-      background: #222;
-      border-radius: 8px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-    .match span {
-      flex: 1;
-      text-align: center;
-    }
-    input[type='number'] {
-      width: 50px;
-      padding: 5px;
-      margin: 0 5px;
-      background-color: #000;
-      color: white;
-      border: 1px solid #b30000;
-      border-radius: 4px;
-      text-align: center;
-    }
-    button {
-      background-color: #b30000;
-      color: white;
-      border: none;
-      padding: 10px;
-      margin: 5px;
-      cursor: pointer;
-      border-radius: 5px;
-    }
-    button:hover {
-      background-color: #ff0000;
-    }
-    .admin-log {
-      margin-top: 30px;
-      background-color: #333;
-      padding: 15px;
-      border-radius: 10px;
-    }
-    .admin-log h3 {
-      margin-top: 0;
-    }
-    .auth-form {
-      max-width: 300px;
-      margin: 30px auto;
-      padding: 20px;
-      background: #222;
-      border-radius: 10px;
-    }
-    .auth-form input, .auth-form select {
-      width: 100%;
-      padding: 10px;
-      margin: 5px 0;
-      border-radius: 5px;
-      border: 1px solid #b30000;
-      background-color: #000;
-      color: white;
-    }
-  </style>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>FF-Typer</title>
 </head>
-<body>
-  <header>Football Fans Typer</header>
-  <div class="screen active" id="register-screen">
-    <form class="auth-form" onsubmit="register(event)">
-      <h2>Zarejestruj się</h2>
-      <input type="text" id="reg-nick" placeholder="Nick" required />
-      <select id="reg-platform" required>
-        <option value="YouTube">YouTube</option>
-        <option value="Instagram">Instagram</option>
-        <option value="TikTok">TikTok</option>
-      </select>
-      <input type="email" id="reg-email" placeholder="Email" required />
-      <input type="password" id="reg-pass" placeholder="Hasło" required />
-      <button type="submit">Zarejestruj</button>
-      <p><a href="#" onclick="showScreen('login-screen')">Masz konto? Zaloguj się</a></p>
-    </form>
+<body style="font-family: sans-serif; padding: 30px;">
+  <h1>FF-Typer</h1>
+
+  <!-- Formularz do obstawiania -->
+  <form id="prediction-form" style="margin-bottom: 40px;">
+    <label>Użytkownik: <input type="text" id="user" required /></label><br><br>
+    <label>Mecz (np. LECH - LEGIA): <input type="text" id="match" required /></label><br><br>
+    <label>Wynik gospodarzy: <input type="number" id="homeScore" required /></label><br><br>
+    <label>Wynik gości: <input type="number" id="awayScore" required /></label><br><br>
+    <button type="submit">Zapisz typ</button>
+  </form>
+
+  <!-- Sekcja pokazująca wszystkie typy -->
+  <div id="all-predictions" style="margin-top: 50px; padding: 20px;">
+    <h2>Wszystkie obstawione mecze</h2>
+    <p>Wczytywanie danych...</p>
   </div>
-  <div class="screen" id="login-screen">
-    <form class="auth-form" onsubmit="login(event)">
-      <h2>Zaloguj się</h2>
-      <input type="text" id="login-email" placeholder="Email" required />
-      <input type="password" id="login-pass" placeholder="Hasło" required />
-      <button type="submit">Zaloguj</button>
-    </form>
-  </div>
-  <div class="screen" id="main-screen">
-    <div id="match-list"></div>
-    <div class="admin-log">
-      <h3>Typy użytkowników</h3>
-      <ul id="admin-logs"></ul>
-    </div>
-  </div>  <script type="module">
+
+  <!-- Firebase SDK + JS -->
+  <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-app.js";
-    import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-analytics.js";
+    import { getFirestore, collection, addDoc, getDocs, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyDIhMW94ZY7_7w8yttJSHAwmCPR3bSTsHw",
@@ -130,103 +39,81 @@
     };
 
     const app = initializeApp(firebaseConfig);
-    const analytics = getAnalytics(app);
-  </script>  <script>
-    const matches = [
-      ["Legia Warszawa", "Lech Poznań"],
-      ["Raków Częstochowa", "Górnik Zabrze"],
-      ["Zagłębie Lubin", "Korona Kielce"],
-      ["Piast Gliwice", "Warta Poznań"],
-      ["Cracovia", "Pogoń Szczecin"],
-      ["Jagiellonia Białystok", "Stal Mielec"],
-      ["Wisła Kraków", "ŁKS Łódź"],
-      ["Radomiak Radom", "Motor Lublin"],
-      ["Arka Gdynia", "Lechia Gdańsk"]
-    ];
+    const db = getFirestore(app);
 
-    let currentUser = JSON.parse(localStorage.getItem("currentUser"));
-    if (currentUser) {
-      showScreen("main-screen");
-      loadMatches();
-    }
-
-    function showScreen(screenId) {
-      document.querySelectorAll(".screen").forEach(s => s.classList.remove("active"));
-      document.getElementById(screenId).classList.add("active");
-    }
-
-    function register(e) {
+    // ZAPISYWANIE TYPU
+    const form = document.getElementById("prediction-form");
+    form.addEventListener("submit", async (e) => {
       e.preventDefault();
-      const nick = document.getElementById("reg-nick").value;
-      const platform = document.getElementById("reg-platform").value;
-      const email = document.getElementById("reg-email").value;
-      const pass = document.getElementById("reg-pass").value;
-      const users = JSON.parse(localStorage.getItem("users") || "[]");
-      users.push({ nick, platform, email, pass });
-      localStorage.setItem("users", JSON.stringify(users));
-      localStorage.setItem("currentUser", JSON.stringify({ nick, email }));
-      showScreen("main-screen");
-      loadMatches();
-    }
+      const user = document.getElementById("user").value.trim();
+      const matchId = document.getElementById("match").value.trim();
+      const homeScore = parseInt(document.getElementById("homeScore").value);
+      const awayScore = parseInt(document.getElementById("awayScore").value);
 
-    function login(e) {
-      e.preventDefault();
-      const email = document.getElementById("login-email").value;
-      const pass = document.getElementById("login-pass").value;
-      const users = JSON.parse(localStorage.getItem("users") || "[]");
-      const user = users.find(u => u.email === email && u.pass === pass);
-      if (user) {
-        localStorage.setItem("currentUser", JSON.stringify({ nick: user.nick, email }));
-        showScreen("main-screen");
-        loadMatches();
-      } else {
-        alert("Błędne dane logowania");
+      if (!user || !matchId || isNaN(homeScore) || isNaN(awayScore)) {
+        alert("Wypełnij poprawnie wszystkie pola.");
+        return;
       }
-    }
 
-    function loadMatches() {
-      const container = document.getElementById("match-list");
-      const logs = document.getElementById("admin-logs");
-      container.innerHTML = "";
-      logs.innerHTML = "";
-      matches.forEach((match, i) => {
-        const saved = JSON.parse(localStorage.getItem("results") || "[]");
-        const div = document.createElement("div");
-        div.className = "match";
-        div.innerHTML = `
-          <span>${match[0]}</span>
-          <input type="number" min="0" id="home-${i}" placeholder="0" inputmode="numeric" />
-          <span>-</span>
-          <input type="number" min="0" id="away-${i}" placeholder="0" inputmode="numeric" />
-          <span>${match[1]}</span>
-          <button onclick="submitResult(${i})">Zatwierdź</button>
+      try {
+        await addDoc(collection(db, "predictions"), {
+          user,
+          matchId,
+          homeScore,
+          awayScore,
+          timestamp: serverTimestamp()
+        });
+        alert("Typ zapisany!");
+        form.reset();
+        loadAllPredictions(); // Odśwież dane po zapisie
+      } catch (error) {
+        console.error("Błąd zapisu:", error);
+        alert("Błąd zapisu typu.");
+      }
+    });
+
+    // WCZYTYWANIE TYPOW
+    async function loadAllPredictions() {
+      const querySnapshot = await getDocs(collection(db, "predictions"));
+      const container = document.getElementById("all-predictions");
+
+      let html = `
+        <table style="width: 100%; border-collapse: collapse; margin-top: 15px;">
+          <thead>
+            <tr style="background-color: #f0f0f0;">
+              <th style="padding: 10px; border: 1px solid #ccc;">Użytkownik</th>
+              <th style="padding: 10px; border: 1px solid #ccc;">Mecz</th>
+              <th style="padding: 10px; border: 1px solid #ccc;">Typ</th>
+              <th style="padding: 10px; border: 1px solid #ccc;">Data</th>
+            </tr>
+          </thead>
+          <tbody>
+      `;
+
+      querySnapshot.forEach((doc) => {
+        const data = doc.data();
+        const date = data.timestamp?.seconds
+          ? new Date(data.timestamp.seconds * 1000).toLocaleString("pl-PL")
+          : "-";
+
+        html += `
+          <tr>
+            <td style="padding: 8px; border: 1px solid #ccc;">${data.user || "?"}</td>
+            <td style="padding: 8px; border: 1px solid #ccc;">${data.matchId || "?"}</td>
+            <td style="padding: 8px; border: 1px solid #ccc;">${data.homeScore}:${data.awayScore}</td>
+            <td style="padding: 8px; border: 1px solid #ccc;">${date}</td>
+          </tr>
         `;
-        container.appendChild(div);
       });
 
-      const allResults = JSON.parse(localStorage.getItem("results") || "[]");
-      allResults.forEach(r => {
-        const li = document.createElement("li");
-        li.textContent = `${r.nick} obstawił ${matches[r.match][0]} ${r.home}:${r.away} ${matches[r.match][1]} o ${r.time}`;
-        logs.appendChild(li);
-      });
+      html += `</tbody></table>`;
+      container.innerHTML = `
+        <h2>Wszystkie obstawione mecze</h2>
+        ${querySnapshot.empty ? "<p>Brak obstawień.</p>" : html}
+      `;
     }
 
-    function submitResult(i) {
-      const home = document.getElementById(`home-${i}`).value;
-      const away = document.getElementById(`away-${i}`).value;
-      const currentUser = JSON.parse(localStorage.getItem("currentUser"));
-      const result = {
-        nick: currentUser.nick,
-        match: i,
-        home,
-        away,
-        time: new Date().toLocaleString()
-      };
-      const results = JSON.parse(localStorage.getItem("results") || "[]");
-      results.push(result);
-      localStorage.setItem("results", JSON.stringify(results));
-      loadMatches();
-    }
-  </script></body>
+    loadAllPredictions();
+  </script>
+</body>
 </html>
