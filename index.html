@@ -4,95 +4,114 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>FF-Typer</title>
   <style>
-    body { font-family: Arial, sans-serif; background: #f2f2f2; margin: 0; padding: 0; }
-    .container { max-width: 800px; margin: auto; padding: 20px; background: white; border-radius: 8px; }
-    h1 { text-align: center; }
-    .match { margin: 10px 0; padding: 10px; border: 1px solid #ccc; border-radius: 6px; background: #fafafa; }
-    .prediction-input { width: 50px; margin: 0 5px; }
-    button { padding: 6px 12px; margin-top: 10px; cursor: pointer; }
-    .submitted-types { margin-top: 20px; }
+    body { font-family: Arial, sans-serif; margin: 20px; background-color: #f2f2f2; }
+    .match { background: #fff; padding: 10px; margin-bottom: 10px; border-radius: 8px; box-shadow: 0 0 5px rgba(0,0,0,0.1); }
+    .match input { width: 30px; text-align: center; }
+    .button { margin-top: 5px; }
+    #logoutBtn { position: fixed; top: 10px; right: 10px; padding: 5px 10px; }
+    #matchList { max-width: 600px; margin: auto; }
+    #typyGraczy { max-width: 600px; margin: 40px auto; background: #fff; padding: 15px; border-radius: 8px; box-shadow: 0 0 5px rgba(0,0,0,0.1); }
   </style>
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.11/firebase-app.js";
-    import { getFirestore, collection, addDoc, getDocs, serverTimestamp, query, orderBy } from "https://www.gstatic.com/firebasejs/9.6.11/firebase-firestore.js";const firebaseConfig = {
-  apiKey: "AIzaSyDIhMW94ZY7_7w8yttJSHAwmCPR3bSTsHw",
-  authDomain: "ff-typer.firebaseapp.com",
-  projectId: "ff-typer",
-  storageBucket: "ff-typer.appspot.com",
-  messagingSenderId: "22978913956",
-  appId: "1:22978913956:web:6e6113180e48142d952831",
-  measurementId: "G-2BFZY3PWFZ"
-};
-
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
-
-const matches = [
-  { id: "1", home: "Legia", away: "Lech" },
-  { id: "2", home: "Wisła", away: "Pogoń" },
-  { id: "3", home: "Cracovia", away: "Widzew" }
-];
-
-const container = document.querySelector(".container");
-const typesDiv = document.getElementById("submittedTypes");
-let username = localStorage.getItem("fftyper_username") || prompt("Podaj swój nick:");
-localStorage.setItem("fftyper_username", username);
-
-function createMatchElements() {
-  matches.forEach(match => {
-    const div = document.createElement("div");
-    div.className = "match";
-    div.innerHTML = `
-      <strong>${match.home} vs ${match.away}</strong><br>
-      <input id="home-${match.id}" class="prediction-input" type="number" min="0"> : 
-      <input id="away-${match.id}" class="prediction-input" type="number" min="0">
-      <button onclick="submitPrediction('${match.id}', '${match.home}', '${match.away}')">Zapisz</button>
-    `;
-    container.appendChild(div);
-  });
-}
-
-window.submitPrediction = async (matchId, home, away) => {
-  const homeGoals = document.getElementById(`home-${matchId}`).value;
-  const awayGoals = document.getElementById(`away-${matchId}`).value;
-  if (homeGoals === "" || awayGoals === "") return alert("Podaj oba wyniki!");
-
-  await addDoc(collection(db, "types"), {
-    user: username,
-    matchId,
-    homeTeam: home,
-    awayTeam: away,
-    prediction: `${homeGoals}:${awayGoals}`,
-    timestamp: serverTimestamp()
-  });
-  alert("Typ zapisany!");
-  loadPredictions();
-};
-
-async function loadPredictions() {
-  typesDiv.innerHTML = "<h2>Typy graczy</h2>";
-  const q = query(collection(db, "types"), orderBy("timestamp", "desc"));
-  const snapshot = await getDocs(q);
-
-  snapshot.forEach(doc => {
-    const data = doc.data();
-    const time = data.timestamp?.toDate().toLocaleString("pl-PL") || "brak czasu";
-    const p = document.createElement("p");
-    p.textContent = `${data.user} obstawił ${data.homeTeam} - ${data.awayTeam} ${data.prediction} (${time})`;
-    typesDiv.appendChild(p);
-  });
-}
-
-createMatchElements();
-loadPredictions();
-
-  </script>
 </head>
-<body>
-  <div class="container">
-    <h1>FF-Typer - Kolejka 1</h1>
-    <!-- Mecze będą generowane tutaj -->
-    <div id="submittedTypes" class="submitted-types"></div>
-  </div>
-</body>
+<body><button id="logoutBtn">Wyloguj się</button>
+
+  <h1>Typowanie - 1. kolejka</h1>
+  <div id="matchList"></div>  <h2>Typy graczy</h2>
+  <div id="typyGraczy"></div>  <!-- Firebase SDK -->  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+    import { getAuth, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+    import { getFirestore, collection, doc, getDoc, getDocs, setDoc, query, where } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyDIhMW94ZY7_7w8yttJSHAwmCPR3bSTsHw",
+      authDomain: "ff-typer.firebaseapp.com",
+      projectId: "ff-typer",
+      storageBucket: "ff-typer.appspot.com",
+      messagingSenderId: "22978913956",
+      appId: "1:22978913956:web:6e6113180e48142d952831",
+      measurementId: "G-2BFZY3PWFZ"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth();
+    const db = getFirestore(app);
+
+    const matches = [
+      { id: "1", team1: "Legia Warszawa", team2: "Lech Poznań" },
+      { id: "2", team1: "Raków Częstochowa", team2: "Pogoń Szczecin" },
+      { id: "3", team1: "Górnik Zabrze", team2: "Śląsk Wrocław" },
+      { id: "4", team1: "Cracovia", team2: "Piast Gliwice" },
+      { id: "5", team1: "Jagiellonia Białystok", team2: "Zagłębie Lubin" },
+      { id: "6", team1: "Widzew Łódź", team2: "Korona Kielce" },
+      { id: "7", team1: "Radomiak Radom", team2: "Ruch Chorzów" },
+      { id: "8", team1: "ŁKS Łódź", team2: "Stal Mielec" },
+      { id: "9", team1: "Wisła Kraków", team2: "Podbeskidzie" },
+    ];
+
+    const userEmail = localStorage.getItem("userEmail");
+    const matchList = document.getElementById("matchList");
+
+    function renderMatches(userId) {
+      matches.forEach(match => {
+        const div = document.createElement("div");
+        div.className = "match";
+        div.innerHTML = `
+          <strong>${match.team1} vs ${match.team2}</strong><br>
+          Twój typ:
+          <input type="number" min="0" id="${match.id}-team1">:
+          <input type="number" min="0" id="${match.id}-team2">
+          <button class="button" onclick="saveType('${match.id}', '${match.team1}', '${match.team2}', '${userId}')">Zapisz</button>
+        `;
+        matchList.appendChild(div);
+      });
+    }
+
+    window.saveType = async function (matchId, team1, team2, userId) {
+      const g1 = document.getElementById(`${matchId}-team1`).value;
+      const g2 = document.getElementById(`${matchId}-team2`).value;
+      const timestamp = new Date().toLocaleString();
+
+      await setDoc(doc(db, "typy", `${matchId}_${userId}`), {
+        matchId,
+        user: userEmail,
+        score: `${g1}:${g2}`,
+        team1,
+        team2,
+        time: timestamp
+      });
+      alert("Typ zapisany!");
+      loadAllTypes();
+    }
+
+    async function loadAllTypes() {
+      const q = query(collection(db, "typy"));
+      const querySnapshot = await getDocs(q);
+
+      const typyDiv = document.getElementById("typyGraczy");
+      typyDiv.innerHTML = "";
+
+      querySnapshot.forEach(doc => {
+        const data = doc.data();
+        typyDiv.innerHTML += `
+          <div><strong>${data.user}</strong> obstawił <em>${data.team1} vs ${data.team2}</em>: <strong>${data.score}</strong> <small>(${data.time})</small></div>
+        `;
+      });
+    }
+
+    document.getElementById("logoutBtn").addEventListener("click", () => {
+      signOut(auth).then(() => {
+        localStorage.clear();
+        window.location.href = "login.html";
+      });
+    });
+
+    onAuthStateChanged(auth, (user) => {
+      if (user) {
+        renderMatches(user.uid);
+        loadAllTypes();
+      } else {
+        window.location.href = "login.html";
+      }
+    });
+  </script></body>
 </html>
